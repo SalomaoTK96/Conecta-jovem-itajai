@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conecta Jovem Itajaí</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container nav">
+      <a class="logo" href="#">
+        <span class="logo-mark">CJ</span>
+        <span>Conecta <strong>Jovem</strong></span>
+      </a>
+
+      <nav>
+        <a href="#vagas">Vagas</a>
+        <a href="#como-funciona">Como funciona</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="btn btn-outline" onclick="openModal('loginModal')">Entrar</button>
+        <button class="btn btn-primary" onclick="openModal('signupModal')">Criar conta</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-content">
+        <div class="hero-copy">
+          <span class="eyebrow">ITAJAI E REGIAO</span>
+          <h1>Seu primeiro passo<br><span>começa aqui.</span></h1>
+          <p>
+            Encontre vagas de aprendizagem e estágio, monte seu currículo
+            e acompanhe suas candidaturas em um só lugar.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-large" href="#vagas">Encontrar vagas</a>
+            <button class="btn btn-soft btn-large" onclick="openModal('signupModal')">Criar meu perfil</button>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="hero-card-top">
+            <span class="status-dot"></span>
+            <span>Oportunidades perto de você</span>
+          </div>
+          <div class="mini-job">
+            <div class="company-icon">AC</div>
+            <div>
+              <strong>Aprendiz Administrativo</strong>
+              <small>Empresa local • Itajaí</small>
+            </div>
+            <span class="tag">Aprendiz</span>
+          </div>
+          <div class="mini-job">
+            <div class="company-icon orange">ST</div>
+            <div>
+              <strong>Estágio em Tecnologia</strong>
+              <small>Empresa local • Itajaí</small>
+            </div>
+            <span class="tag blue">Estágio</span>
+          </div>
+          <div class="mini-job">
+            <div class="company-icon green">LP</div>
+            <div>
+              <strong>Jovem Aprendiz</strong>
+              <small>Empresa local • Região</small>
+            </div>
+            <span class="tag">Aprendiz</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="search-section" id="vagas">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">OPORTUNIDADES</span>
+            <h2>Encontre uma vaga para você</h2>
+          </div>
+          <span id="resultCount" class="result-count">6 oportunidades</span>
+        </div>
+
+        <div class="search-box">
+          <div class="field keyword">
+            <label for="keyword">O que você procura?</label>
+            <input id="keyword" type="text" placeholder="Ex.: administrativo, tecnologia...">
+          </div>
+
+          <div class="field">
+            <label for="area">Área</label>
+            <select id="area">
+              <option value="">Todas as áreas</option>
+              <option>Administrativo</option>
+              <option>Tecnologia</option>
+              <option>Comércio</option>
+              <option>Logística</option>
+              <option>Serviços</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="city">Cidade</label>
+            <select id="city">
+              <option value="">Todas as cidades</option>
+              <option>Itajaí</option>
+              <option>Navegantes</option>
+              <option>Balneário Camboriú</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary search-btn" onclick="filterJobs()">Buscar</button>
+        </div>
+
+        <div class="jobs" id="jobs"></div>
+      </div>
+    </section>
+
+    <section class="how" id="como-funciona">
+      <div class="container">
+        <div class="section-heading centered">
+          <span class="eyebrow">COMO FUNCIONA</span>
+          <h2>Do cadastro à candidatura</h2>
+          <p>Um processo simples para ajudar você a encontrar sua primeira oportunidade.</p>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <span>01</span>
+            <h3>Crie seu perfil</h3>
+            <p>Cadastre seus dados e monte seu currículo diretamente na plataforma.</p>
+          </div>
+          <div class="step">
+            <span>02</span>
+            <h3>Encontre sua vaga</h3>
+            <p>Pesquise oportunidades por área, cidade ou palavra-chave.</p>
+          </div>
+          <div class="step">
+            <span>03</span>
+            <h3>Acompanhe</h3>
+            <p>Candidate-se e acompanhe o status de cada candidatura.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-content">
+      <span>© 2026 Conecta Jovem Itajaí</span>
+      <span>Uma plataforma para conectar jovens e oportunidades.</span>
+    </div>
+  </footer>
+
+  <div class="modal" id="loginModal">
+    <div class="modal-card">
+      <button class="close" onclick="closeModal('loginModal')">×</button>
+      <span class="eyebrow">BEM-VINDO</span>
+      <h2>Entrar</h2>
+      <p>Acesse sua conta para acompanhar suas oportunidades.</p>
+      <input type="email" placeholder="E-mail">
+      <input type="password" placeholder="Senha">
+      <button class="btn btn-primary full">Entrar</button>
+    </div>
+  </div>
+
+  <div class="modal" id="signupModal">
+    <div class="modal-card">
+      <button class="close" onclick="closeModal('signupModal')">×</button>
+      <span class="eyebrow">COMECE AGORA</span>
+      <h2>Criar conta</h2>
+      <p>Escolha como você deseja utilizar o Conecta Jovem.</p>
+      <button class="profile-option" onclick="alert('Cadastro de jovem selecionado.')">
+        <strong>Sou jovem</strong>
+        <small>Quero encontrar oportunidades.</small>
+      </button>
+      <button class="profile-option" onclick="alert('Cadastro de empresa selecionado.')">
+        <strong>Sou empresa</strong>
+        <small>Quero divulgar uma vaga.</small>
+      </button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
