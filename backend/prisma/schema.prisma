@@ -11,3 +11,231 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+// ===== Listas de valores fixos =====
+// Usar enum em vez de texto livre garante no banco que só entra valor válido.
+// Isso já atende o critério do US11: status fora da lista é recusado.
+
+enum PerfilUsuario {
+  JOVEM
+  EMPRESA
+  ADMIN
+}
+
+enum StatusEmpresa {
+  PENDENTE
+  EM_ANALISE
+  VALIDADA
+  REJEITADA
+}
+
+enum StatusSolicitacao {
+  PENDENTE
+  DOCUMENTOS_PENDENTES
+  APROVADA
+  REJEITADA
+}
+
+enum TipoVaga {
+  APRENDIZAGEM
+  ESTAGIO
+}
+
+enum StatusVaga {
+  ABERTA
+  ENCERRADA
+}
+
+enum StatusCandidatura {
+  EM_ANALISE
+  EM_SELECAO
+  APROVADA
+  RECUSADA
+}
+
+// ===== Contas e perfis =====
+
+// Tudo que faz login é Usuario. Jovem, Empresa e Admin se diferenciam pelo campo perfil.
+// Assim o login (US03) é um só, e não três telas diferentes.
+model Usuario {
+  id        Int           @id @default(autoincrement())
+  email     String        @unique // RN03: um e-mail por conta
+  senhaHash String // RNF03: só o hash bcrypt entra aqui, nunca a senha
+  perfil    PerfilUsuario
+  criadoEm  DateTime      @default(now())
+
+  jovem                Jovem?
+  empresa              Empresa?
+  notificacoes         Notificacao[]
+  alteracoesDeStatus   HistoricoCandidatura[] @relation("AlteradoPor")
+  validacoesAnalisadas SolicitacaoValidacao[] @relation("AnalisadoPor")
+}
+
+model Jovem {
+  id             Int      @id @default(autoincrement())
+  usuarioId      Int      @unique
+  nome           String
+  dataNascimento DateTime // RN09: faixa de 14 a 24 anos é validada na API
+
+  // RN11: menor de 16 anos só se cadastra com o consentimento do responsável
+  nomeResponsavel  String?
+  consentimentoEm  DateTime?
+
+  usuario      Usuario       @relation(fields: [usuarioId], references: [id])
+  perfil       Perfil?
+  curriculo    Curriculo?
+  candidaturas Candidatura[]
+}
+
+// Dados de contato e habilidades (US04). Separado do Jovem porque o RNF08
+// trata esses campos como dados pessoais de visibilidade restrita.
+model Perfil {
+  id          Int     @id @default(autoincrement())
+  jovemId     Int     @unique
+  telefone    String?
+  endereco    String?
+  habilidades String?
+
+  jovem Jovem @relation(fields: [jovemId], references: [id])
+}
+
+// ===== Currículo montado dentro do sistema (US05) =====
+
+model Curriculo {
+  id        Int    @id @default(autoincrement())
+  jovemId   Int    @unique
+  objetivo  String?
+
+  jovem         Jovem          @relation(fields: [jovemId], references: [id])
+  escolaridades Escolaridade[]
+  experiencias  Experiencia[]
+}
+
+model Escolaridade {
+  id          Int     @id @default(autoincrement())
+  curriculoId Int
+  instituicao String
+  curso       String
+  nivel       String
+  anoInicio   Int
+  anoFim      Int?
+
+  curriculo Curriculo @relation(fields: [curriculoId], references: [id], onDelete: Cascade)
+}
+
+// Pode ficar vazia: quem busca o primeiro emprego não tem experiência ainda.
+model Experiencia {
+  id          Int       @id @default(autoincrement())
+  curriculoId Int
+  empresa     String
+  cargo       String
+  descricao   String?
+  inicio      DateTime
+  fim         DateTime?
+
+  curriculo Curriculo @relation(fields: [curriculoId], references: [id], onDelete: Cascade)
+}
+
+// ===== Empresa e validação (US06, US07) =====
+
+model Empresa {
+  id          Int           @id @default(autoincrement())
+  usuarioId   Int           @unique
+  razaoSocial String
+  cnpj        String        @unique
+  status      StatusEmpresa @default(PENDENTE) // RN01: só publica vaga depois de VALIDADA
+
+  usuario      Usuario                @relation(fields: [usuarioId], references: [id])
+  vagas        Vaga[]
+  solicitacoes SolicitacaoValidacao[]
+}
+
+model SolicitacaoValidacao {
+  id            Int               @id @default(autoincrement())
+  empresaId     Int
+  status        StatusSolicitacao @default(PENDENTE)
+  motivo        String? // obrigatório quando o admin rejeita
+  enviadaEm     DateTime          @default(now())
+  analisadaEm   DateTime?
+  analisadoPorId Int? // RN10: quem decidiu, para auditoria
+
+  empresa       Empresa     @relation(fields: [empresaId], references: [id])
+  analisadoPor  Usuario?    @relation("AnalisadoPor", fields: [analisadoPorId], references: [id])
+  documentos    Documento[]
+}
+
+model Documento {
+  id            Int      @id @default(autoincrement())
+  solicitacaoId Int
+  tipo          String
+  arquivo       String // caminho do arquivo guardado
+  enviadoEm     DateTime @default(now())
+
+  solicitacao SolicitacaoValidacao @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+}
+
+// ===== Vagas (US08, US09) =====
+
+model Vaga {
+  id         Int        @id @default(autoincrement())
+  empresaId  Int
+  titulo     String
+  tipo       TipoVaga
+  area       String
+  cidade     String
+  descricao  String
+  requisitos String?
+  status     StatusVaga @default(ABERTA)
+  expiraEm   DateTime // RN06: passou o prazo, a vaga é encerrada
+  criadaEm   DateTime   @default(now())
+
+  empresa      Empresa       @relation(fields: [empresaId], references: [id])
+  candidaturas Candidatura[]
+
+  // Índice que o TS05 exige para o mural responder em até 2 segundos
+  @@index([area, cidade, status])
+}
+
+// ===== Candidatura e acompanhamento (US10 a US13) =====
+
+model Candidatura {
+  id           Int               @id @default(autoincrement())
+  jovemId      Int
+  vagaId       Int
+  status       StatusCandidatura @default(EM_ANALISE)
+  criadaEm     DateTime          @default(now())
+  atualizadaEm DateTime          @updatedAt
+
+  jovem     Jovem                  @relation(fields: [jovemId], references: [id])
+  vaga      Vaga                   @relation(fields: [vagaId], references: [id])
+  historico HistoricoCandidatura[]
+  notificacoes Notificacao[]
+
+  // RN05: o mesmo jovem não se candidata duas vezes à mesma vaga
+  @@unique([jovemId, vagaId])
+}
+
+// RN08: toda mudança de status fica registrada aqui, com quem mudou e quando
+model HistoricoCandidatura {
+  id             Int                @id @default(autoincrement())
+  candidaturaId  Int
+  statusAnterior StatusCandidatura?
+  statusNovo     StatusCandidatura
+  alteradoPorId  Int
+  criadoEm       DateTime           @default(now())
+
+  candidatura Candidatura @relation(fields: [candidaturaId], references: [id], onDelete: Cascade)
+  alteradoPor Usuario     @relation("AlteradoPor", fields: [alteradoPorId], references: [id])
+}
+
+// Notificações internas (US13). E-mail e push ficaram fora do escopo.
+model Notificacao {
+  id            Int      @id @default(autoincrement())
+  destinatarioId Int
+  mensagem      String
+  lida          Boolean  @default(false)
+  candidaturaId Int?
+  criadaEm      DateTime @default(now())
+
+  destinatario Usuario      @relation(fields: [destinatarioId], references: [id])
+  candidatura  Candidatura? @relation(fields: [candidaturaId], references: [id])
+}
