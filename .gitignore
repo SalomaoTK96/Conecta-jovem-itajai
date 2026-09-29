@@ -17,3 +17,12 @@ Thumbs.db
 # Build
 dist/
 build/
+
+
+.claude/
+.windsurf/
+.agents/
+skills-lock.json
+
+CLAUDE.md
+CLAUDE.md
