@@ -1,24 +1,28 @@
-# Compiled class file
-*.class
+# Node
+node_modules/
+npm-debug.log*
 
-# Log file
-*.log
+# Variáveis de ambiente (nunca versionar)
+.env
+.env.local
 
-# BlueJ files
-*.ctxt
+# Prisma
+backend/prisma/*.db
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# Editor e sistema
+.vscode/
+.DS_Store
+Thumbs.db
 
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+# Build
+dist/
+build/
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+
+.claude/
+.windsurf/
+.agents/
+skills-lock.json
+
+CLAUDE.md
+CLAUDE.md
