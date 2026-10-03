@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Jovem | Conecta Jovem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="index.html" class="logo">Conecta Jovem</a>
+        </div>
+    </header>
+
+    <main class="auth-section">
+        <form class="auth-form" aria-labelledby="cadastro-jovem-titulo">
+            <h1 id="cadastro-jovem-titulo">Cadastro de Jovem</h1>
+
+            <label for="nome">Nome completo</label>
+            <input type="text" id="nome" name="nome"
+                   autocomplete="name" required>
+
+            <label for="nascimento">Data de nascimento</label>
+            <input type="date" id="nascimento" name="nascimento"
+                   autocomplete="bday" required>
+
+                   <div id="dados-responsavel" hidden>
+    <label for="responsavel">Nome do responsável legal</label>
+    <input type="text" id="responsavel" name="responsavel">
+
+    <label>
+        <input type="checkbox" id="consentimento" name="consentimento">
+        Tenho o consentimento do responsável legal.
+    </label>
+</div>
+                   
+
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email"
+                   autocomplete="email" required>
+
+            <label for="telefone">Telefone</label>
+            <input type="tel" id="telefone" name="telefone"
+                   autocomplete="tel" required>
+
+
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" name="senha"
+                   minlength="8" autocomplete="new-password" required>
+
+            <label for="confirmar-senha">Confirmar senha</label>
+            <input type="password" id="confirmar-senha"
+                   name="confirmar-senha"
+                   minlength="8" autocomplete="new-password" required>
+
+            <button type="submit" class="register-button">
+                Criar conta
+            </button>
+
+            <p>Já tem conta? <a href="login.html">Entrar</a></p>
+            <p><a href="cadastro.html">Voltar à escolha de cadastro</a></p>
+        </form>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
