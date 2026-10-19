@@ -1,0 +1,50 @@
+# Roda sozinho a cada pull request para a main e a cada push na main.
+# Serve de trava: se algum passo falhar, o GitHub marca o pull request
+# como reprovado e não deixa fazer o merge.
+
+name: Verificacao
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixa o codigo
+        uses: actions/checkout@v4
+
+      - name: Prepara o Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # npm ci instala exatamente o que esta no package-lock.
+      # Se alguem mexeu no package.json e esqueceu de atualizar o lock, quebra aqui.
+      - name: Instala as dependencias
+        working-directory: backend
+        run: npm ci
+
+      # Confere se o modelo de dados do Prisma esta valido.
+      # A URL abaixo e so para o comando rodar, nao conecta em banco nenhum.
+      - name: Confere o modelo de dados
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
+        run: npx prisma validate
+
+      # Garante que nenhum segredo de verdade foi commitado por engano.
+      - name: Garante que o .env nao foi versionado
+        run: |
+          if git ls-files --error-unmatch backend/.env > /dev/null 2>&1; then
+            echo "O arquivo backend/.env foi commitado. Remova antes de seguir."
+            exit 1
+          fi
+          echo "Nenhum .env versionado."
