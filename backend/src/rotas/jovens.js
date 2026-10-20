@@ -33,6 +33,10 @@ rotas.post("/", async (req, res) => {
     const senhaHash = await gerarHash(dados.senha);
 
     const precisaResponsavel = conferencia.idade < 16;
+    const telefone =
+      typeof dados.telefone === "string" && dados.telefone.trim()
+        ? dados.telefone.trim()
+        : null;
 
     // Criar o usuário e o jovem numa tacada só. Se uma das duas falhar, o
     // Prisma desfaz a outra, e não sobra conta pela metade no banco.
@@ -49,6 +53,10 @@ rotas.post("/", async (req, res) => {
               ? dados.nomeResponsavel.trim()
               : null,
             consentimentoEm: precisaResponsavel ? new Date() : null,
+
+            // O formulário já pede o telefone, então guardamos junto em vez de
+            // jogar fora. Editar esses dados depois é assunto da US04.
+            perfil: telefone ? { create: { telefone } } : undefined,
           },
         },
       },
