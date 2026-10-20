@@ -21,8 +21,7 @@ app.get("/saude", (req, res) => {
 });
 
 // As rotas de cada item do backlog entram aqui embaixo, uma linha por assunto.
-// Quando a US01 existir, vai ser algo como:
-// app.use("/jovens", require("./rotas/jovens"));
+app.use("/jovens", require("./rotas/jovens"));
 
 // Qualquer endereço que não casou com nada acima cai aqui.
 app.use((req, res) => {
