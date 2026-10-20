@@ -65,18 +65,57 @@ um recebeu um tempero sorteado na hora.
 - [x] Mensagem de erro não entrega se o problema foi o e-mail ou a senha além do necessário
 - [x] Nenhum segredo escrito no código
 
+## Segunda rodada: teste pela tela
+
+Executado em 20/10, depois de ligar `frontend/cadastro-jovem.html` à API.
+O caminho é o do usuário: abrir `http://localhost:3000/cadastro-jovem.html`,
+preencher o formulário e clicar em Criar conta.
+
+| # | Caso | Esperado | Obtido | Situação |
+|---|---|---|---|---|
+| 11 | Preenchimento completo, 19 anos | cria a conta, avisa e leva para o login | conta criada, aviso verde, redirecionou para `login.html` | passou |
+| 12 | Repetir o e-mail do caso 11 (RN03) | aviso de e-mail já cadastrado | "Este e-mail já tem conta." | passou |
+| 13 | Data de nascimento de quem tem 25 anos (RN09) | aviso de idade fora da faixa | "A plataforma atende jovens de 14 a 24 anos." | passou |
+| 14 | Data de nascimento de quem tem 13 anos (RN09) | aviso de idade fora da faixa | ver defeito abaixo | reprovou, corrigido e reexecutado |
+| 15 | 15 anos com responsável e consentimento (RN11) | cria a conta | conta criada, redirecionou | passou |
+
+### Defeito encontrado e corrigido
+
+**Caso 14, primeira execução.** Ao informar a data de nascimento de quem tem
+13 anos, a tela abria o bloco do responsável legal e tornava os campos
+obrigatórios. Como eles estavam vazios, o navegador travava o envio e o
+formulário nunca chegava na API. O usuário ficava preso num campo de
+responsável, sem nunca ser informado do problema real, que é a idade estar
+fora da faixa atendida.
+
+Classificação pela aula: defeito **grande**, de interface, com origem na
+codificação. A regra da tela dizia "menor de 16 precisa de responsável" sem
+considerar que a RN09 já teria recusado aquela idade antes.
+
+Correção: a tela passou a só exigir responsável de quem está dentro da faixa
+de 14 a 24 anos, espelhando a regra que a API aplica. Commit
+`US01: envia o cadastro da tela para a API`.
+
+Reexecução do caso 14 depois da correção: o bloco do responsável não aparece,
+o formulário envia, e a tela mostra "A plataforma atende jovens de 14 a 24
+anos". Passou.
+
+Os casos 11, 12, 13 e 15 foram reexecutados depois da correção e continuaram
+passando (teste de regressão).
+
 ## Conclusão
 
 | Campo | Valor |
 |---|---|
-| Casos executados | 10 |
-| Casos aprovados | 10 |
-| Casos reprovados | 0 |
-| Situação do item | aprovado na camada de API |
+| Casos executados | 15 (10 pela API, 5 pela tela) |
+| Casos aprovados | 15 |
+| Casos reprovados | 1 na primeira execução, corrigido e reaprovado |
+| Defeitos encontrados | 1 (grande, interface) |
+| Situação do item | aprovado |
 
 Pendências e observações:
 
-- Falta ligar a tela de cadastro à API. Hoje `frontend/cadastro-jovem.html`
-  valida no navegador mas ainda mostra um aviso em vez de enviar os dados.
-- O teste acima foi executado contra a API. O teste pela tela entra quando a
-  ligação estiver feita.
+- Pelo princípio de que quem implementa não testa, estes casos devem ser
+  reexecutados por outro integrante antes do item ir para "Testado".
+- A US03 (login) ainda não existe, então a conta criada não consegue entrar
+  no sistema. O redirecionamento para a tela de login já está no lugar.
