@@ -25,6 +25,7 @@ app.get("/saude", (req, res) => {
 
 // As rotas de cada item do backlog entram aqui embaixo, uma linha por assunto.
 app.use("/jovens", require("./rotas/jovens"));
+app.use("/empresas", require("./rotas/empresas"));
 app.use("/sessao", require("./rotas/sessao"));
 
 // O mesmo servidor entrega as telas. Em desenvolvimento isso evita precisar de
