@@ -4,8 +4,10 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  // O gerador novo do Prisma 7 só entrega TypeScript, e este projeto é
+  // JavaScript puro. Este aqui entrega JavaScript pronto para usar com
+  // require, que é como o resto do back-end está escrito.
+  provider = "prisma-client-js"
 }
 
 datasource db {
