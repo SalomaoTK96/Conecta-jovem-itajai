@@ -204,3 +204,125 @@ if (formularioDeJovem) {
         }
     });
 }
+
+// =========================
+// SESSÃO: ENTRAR, SAIR E SABER QUEM ESTÁ LOGADO
+// =========================
+
+// O token fica no navegador para o usuário não precisar entrar a cada página.
+// Guardar aqui é o caminho simples e tem um custo: se alguém conseguir rodar
+// script na nossa página, consegue ler o token. É aceitável porque o token
+// vale 8 horas e não carrega dado pessoal, e porque o TS04 vai revisar isso.
+const CHAVE_DO_TOKEN = "conecta-jovem-token";
+
+function guardarToken(token) {
+    localStorage.setItem(CHAVE_DO_TOKEN, token);
+}
+
+function pegarToken() {
+    return localStorage.getItem(CHAVE_DO_TOKEN);
+}
+
+function esquecerToken() {
+    localStorage.removeItem(CHAVE_DO_TOKEN);
+}
+
+// Toda chamada à API que exige login passa por aqui, para o token ir junto
+// sem precisar lembrar disso em cada lugar.
+function chamarComToken(caminho, opcoes = {}) {
+    const token = pegarToken();
+
+    return fetch(`${ENDERECO_DA_API}${caminho}`, {
+        ...opcoes,
+        headers: {
+            ...(opcoes.headers || {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+}
+
+// Troca os botões "Entrar" e "Criar conta" pelo nome de quem entrou e um
+// botão de sair. Roda em todas as páginas que tiverem cabeçalho.
+async function mostrarQuemEstaLogado() {
+    const acoes = document.querySelector(".header-actions");
+    if (!acoes || !pegarToken()) return;
+
+    const resposta = await chamarComToken("/sessao/eu").catch(() => null);
+
+    // Token vencido ou inválido: limpa e deixa a tela como visitante.
+    if (!resposta || !resposta.ok) {
+        esquecerToken();
+        return;
+    }
+
+    const usuario = await resposta.json();
+    const primeiroNome = (usuario.nome || usuario.email).split(" ")[0];
+
+    acoes.querySelectorAll(".login-button, .register-button").forEach((b) => b.remove());
+
+    const saudacao = document.createElement("span");
+    saudacao.className = "saudacao";
+    saudacao.textContent = `Olá, ${primeiroNome}`;
+
+    const sair = document.createElement("button");
+    sair.type = "button";
+    sair.className = "login-button";
+    sair.textContent = "Sair";
+    sair.addEventListener("click", () => {
+        esquecerToken();
+        window.location.href = "index.html";
+    });
+
+    acoes.append(saudacao, sair);
+}
+
+mostrarQuemEstaLogado();
+
+// --- tela de login ---
+
+const formularioDeLogin = document.querySelector("#form-login");
+
+if (formularioDeLogin) {
+    const aviso = formularioDeLogin.querySelector("#aviso");
+    const botao = formularioDeLogin.querySelector("button[type=submit]");
+
+    formularioDeLogin.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        aviso.hidden = true;
+
+        const textoOriginal = botao.textContent;
+        botao.disabled = true;
+        botao.textContent = "Entrando...";
+
+        try {
+            const resposta = await fetch(`${ENDERECO_DA_API}/sessao`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: formularioDeLogin.querySelector("#email").value.trim(),
+                    senha: formularioDeLogin.querySelector("#senha").value,
+                }),
+            });
+
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok && corpo.token) {
+                guardarToken(corpo.token);
+                mostrarAviso(aviso, "sucesso", "Tudo certo. Entrando...");
+                setTimeout(() => { window.location.href = "index.html"; }, 1200);
+                return;
+            }
+
+            mostrarAviso(
+                aviso,
+                "erro",
+                (corpo.erros || [])[0]?.mensagem || "Não foi possível entrar."
+            );
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        } finally {
+            botao.disabled = false;
+            botao.textContent = textoOriginal;
+        }
+    });
+}

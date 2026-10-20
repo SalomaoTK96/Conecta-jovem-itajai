@@ -1459,3 +1459,10 @@ select:focus-visible {
   background: var(--surface-strong);
   color: var(--primary);
 }
+
+/* Nome de quem entrou, no cabeçalho, ao lado do botão de sair. */
+.saudacao {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+}
