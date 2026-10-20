@@ -1294,3 +1294,175 @@ select:focus-visible {
         animation-iteration-count: 1 !important;
     }
 }
+
+/* Aviso do formulário: erro vindo da API e confirmação de cadastro.
+   Não depende só da cor para dizer o que é, por causa do leitor de tela e
+   de quem não distingue vermelho de verde. */
+.aviso {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border-left: 4px solid currentColor;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.aviso--erro {
+  color: #b42318;
+  background: #fef3f2;
+}
+
+.aviso--sucesso {
+  color: #067647;
+  background: #ecfdf3;
+}
+
+.aviso ul {
+  margin: 0.4rem 0 0 1.1rem;
+  padding: 0;
+}
+
+/* ==========================================================
+   TELAS DE ENTRADA E CADASTRO
+   Mesmo fundo e mesmo cartão da página inicial, para as telas
+   não parecerem de outro site. As cores saem das variáveis lá
+   de cima, então o TS04 ajusta contraste num lugar só.
+   ========================================================== */
+
+.auth-section {
+  min-height: calc(100vh - 220px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  background: linear-gradient(180deg, var(--surface-strong), var(--hero-end));
+}
+
+.auth-form {
+  width: 100%;
+  max-width: 460px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.auth-form h1 {
+  margin: 0 0 1.5rem;
+  text-align: center;
+  font-size: 1.75rem;
+  color: var(--text);
+}
+
+.auth-form label {
+  margin-top: 0.9rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="tel"],
+.auth-form input[type="date"],
+.auth-form input[type="password"] {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  margin-top: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--background);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.auth-form input:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 1px;
+  border-color: var(--primary);
+}
+
+.auth-form .register-button,
+.auth-form .login-button {
+  margin-top: 1.6rem;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.auth-form button[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.auth-form p {
+  margin: 0.9rem 0 0;
+  text-align: center;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.auth-form a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* O bloco do responsável legal aparece sozinho para menor de 16 (RN11).
+   Destacado para o usuário perceber que a tela mudou embaixo dele. */
+#dados-responsavel {
+  margin-top: 1.1rem;
+  padding: 1rem;
+  border: 1px dashed var(--primary);
+  border-radius: 12px;
+  background: var(--surface-strong);
+}
+
+#dados-responsavel label:first-child {
+  margin-top: 0;
+}
+
+#dados-responsavel label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* Os dois caminhos de cadastro, jovem e empresa. */
+.account-types {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1.4rem 0 0.4rem;
+}
+
+.account-button {
+  display: block;
+  padding: 1rem;
+  text-align: center;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.account-button:hover,
+.account-button:focus-visible {
+  border-color: var(--primary);
+  background: var(--surface-strong);
+  color: var(--primary);
+}
+
+/* Nome de quem entrou, no cabeçalho, ao lado do botão de sair. */
+.saudacao {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+}
