@@ -1294,3 +1294,30 @@ select:focus-visible {
         animation-iteration-count: 1 !important;
     }
 }
+
+/* Aviso do formulário: erro vindo da API e confirmação de cadastro.
+   Não depende só da cor para dizer o que é, por causa do leitor de tela e
+   de quem não distingue vermelho de verde. */
+.aviso {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border-left: 4px solid currentColor;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.aviso--erro {
+  color: #b42318;
+  background: #fef3f2;
+}
+
+.aviso--sucesso {
+  color: #067647;
+  background: #ecfdf3;
+}
+
+.aviso ul {
+  margin: 0.4rem 0 0 1.1rem;
+  padding: 0;
+}

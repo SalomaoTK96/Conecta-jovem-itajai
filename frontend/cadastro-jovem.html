@@ -15,7 +15,7 @@
     </header>
 
     <main class="auth-section">
-        <form class="auth-form" aria-labelledby="cadastro-jovem-titulo">
+        <form class="auth-form" id="form-cadastro-jovem" aria-labelledby="cadastro-jovem-titulo">
             <h1 id="cadastro-jovem-titulo">Cadastro de Jovem</h1>
 
             <label for="nome">Nome completo</label>
@@ -58,6 +58,10 @@
             <button type="submit" class="register-button">
                 Criar conta
             </button>
+
+            <!-- Onde aparecem o erro vindo da API e a confirmação.
+                 role="alert" faz o leitor de tela anunciar sozinho. -->
+            <p id="aviso" class="aviso" role="alert" hidden></p>
 
             <p>Já tem conta? <a href="login.html">Entrar</a></p>
             <p><a href="cadastro.html">Voltar à escolha de cadastro</a></p>
