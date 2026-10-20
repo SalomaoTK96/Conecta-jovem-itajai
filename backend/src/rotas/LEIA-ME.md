@@ -6,4 +6,4 @@ Quando a US01 for implementada, este diretório ganha `jovens.js`, e o `app.js`
 passa a ter a linha `app.use("/jovens", require("./rotas/jovens"));`.
 
 A regra de negócio fica aqui, nunca só na tela: a validação do navegador
-qualquer pessoa contorna, a da API não.
+qualquer usuário contorna, a da API não.
