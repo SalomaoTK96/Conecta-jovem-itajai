@@ -4,6 +4,7 @@
   "description": "",
   "main": "src/server.js",
   "scripts": {
+    "postinstall": "prisma generate",
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "echo \"Sem testes automatizados ainda. Os roteiros manuais ficam em docs/testes/.\" && exit 0"
