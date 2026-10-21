@@ -4,8 +4,10 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  // O gerador novo do Prisma 7 só entrega TypeScript, e este projeto é
+  // JavaScript puro. Este aqui entrega JavaScript pronto para usar com
+  // require, que é como o resto do back-end está escrito.
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -143,6 +145,11 @@ model Empresa {
   razaoSocial String
   cnpj        String        @unique
   status      StatusEmpresa @default(PENDENTE) // RN01: só publica vaga depois de VALIDADA
+
+  // O formulário de cadastro já pede estes dois. Guardamos em vez de jogar
+  // fora; são o contato para o administrador falar com a empresa na validação.
+  nomeResponsavel String?
+  telefone        String?
 
   usuario      Usuario                @relation(fields: [usuarioId], references: [id])
   vagas        Vaga[]
