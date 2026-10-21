@@ -31,36 +31,16 @@ if (themeButton) {
 // VALIDAÇÃO DAS SENHAS
 // =========================
 
+// Cada formulário que confere senha limpa o aviso de "não coincidem" assim que
+// a pessoa volta a digitar. O envio em si fica com o dono de cada formulário,
+// mais abaixo: aqui não entra manipulador de envio, senão o mesmo formulário
+// teria dois donos brigando pelo mesmo clique.
 document.querySelectorAll(".auth-form").forEach((form) => {
-    const senha = form.querySelector("#senha");
     const confirmarSenha = form.querySelector("#confirmar-senha");
 
-    if (!senha || !confirmarSenha) {
+    if (!confirmarSenha) {
         return;
     }
-
-    // O cadastro de jovem tem envio próprio, lá embaixo, que já confere as
-    // senhas antes de chamar a API. Sem isso o formulário teria dois donos.
-    if (form.id === "form-cadastro-jovem") {
-        confirmarSenha.addEventListener("input", () => {
-            confirmarSenha.setCustomValidity("");
-        });
-        return;
-    }
-
-    form.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        if (senha.value !== confirmarSenha.value) {
-            confirmarSenha.setCustomValidity("As senhas não coincidem.");
-            confirmarSenha.reportValidity();
-            return;
-        }
-
-        confirmarSenha.setCustomValidity("");
-
-        alert("Senhas conferem! O cadastro ainda não está conectado ao servidor.");
-    });
 
     confirmarSenha.addEventListener("input", () => {
         confirmarSenha.setCustomValidity("");
@@ -317,6 +297,99 @@ if (formularioDeLogin) {
                 aviso,
                 "erro",
                 (corpo.erros || [])[0]?.mensagem || "Não foi possível entrar."
+            );
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        } finally {
+            botao.disabled = false;
+            botao.textContent = textoOriginal;
+        }
+    });
+}
+
+// =========================
+// CADASTRO DE EMPRESA: ENVIO PARA A API
+// =========================
+
+// Vai desenhando 00.000.000/0000-00 enquanto a pessoa digita. É só conforto:
+// quem vale é a conferência dos dígitos, que roda na API.
+function formatarCnpj(valor) {
+    const numeros = valor.replace(/\D/g, "").slice(0, 14);
+
+    return numeros
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1/$2")
+        .replace(/(\d{4})(\d)/, "$1-$2");
+}
+
+const formularioDeEmpresa = document.querySelector("#form-cadastro-empresa");
+
+if (formularioDeEmpresa) {
+    const aviso = formularioDeEmpresa.querySelector("#aviso");
+    const botao = formularioDeEmpresa.querySelector("button[type=submit]");
+    const campoCnpj = formularioDeEmpresa.querySelector("#cnpj");
+    const confirmarSenha = formularioDeEmpresa.querySelector("#confirmar-senha");
+
+    campoCnpj.addEventListener("input", () => {
+        campoCnpj.value = formatarCnpj(campoCnpj.value);
+    });
+
+    formularioDeEmpresa.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        aviso.hidden = true;
+
+        const senha = formularioDeEmpresa.querySelector("#senha");
+
+        if (senha.value !== confirmarSenha.value) {
+            confirmarSenha.setCustomValidity("As senhas não coincidem.");
+            confirmarSenha.reportValidity();
+            return;
+        }
+        confirmarSenha.setCustomValidity("");
+
+        const textoOriginal = botao.textContent;
+        botao.disabled = true;
+        botao.textContent = "Enviando...";
+
+        const texto = (id) => {
+            const campo = formularioDeEmpresa.querySelector(`#${id}`);
+            return campo ? campo.value.trim() : "";
+        };
+
+        try {
+            const resposta = await fetch(`${ENDERECO_DA_API}/empresas`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    razaoSocial: texto("nome-empresa"),
+                    cnpj: texto("cnpj"),
+                    nomeResponsavel: texto("responsavel"),
+                    email: texto("email"),
+                    telefone: texto("telefone"),
+                    senha: senha.value,
+                }),
+            });
+
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.status === 201) {
+                mostrarAviso(
+                    aviso,
+                    "sucesso",
+                    "Cadastro enviado. A conta fica pendente até a validação dos documentos. Redirecionando para a tela de entrada..."
+                );
+                formularioDeEmpresa.reset();
+                setTimeout(() => { window.location.href = "login.html"; }, 2600);
+                return;
+            }
+
+            const mensagens = (corpo.erros || []).map((e) => e.mensagem);
+            mostrarAviso(
+                aviso,
+                "erro",
+                mensagens.length ? "Não foi possível criar a conta:" : "Não foi possível criar a conta.",
+                mensagens
             );
         } catch (erro) {
             mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");

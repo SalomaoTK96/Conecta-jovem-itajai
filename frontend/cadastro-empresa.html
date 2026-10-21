@@ -39,7 +39,7 @@
     </header>
 
     <main class="auth-section">
-        <form class="auth-form" aria-labelledby="cadastro-empresa-titulo">
+        <form class="auth-form" id="form-cadastro-empresa" aria-labelledby="cadastro-empresa-titulo">
             <h1 id="cadastro-empresa-titulo">Cadastro de Empresa</h1>
 
             <label for="nome-empresa">Nome da empresa</label>
@@ -74,6 +74,10 @@
             <button type="submit" class="register-button">
                 Solicitar cadastro
             </button>
+
+            <!-- Onde aparece o retorno da API. role="alert" faz o leitor de
+                 tela anunciar sozinho quando o texto muda. -->
+            <p id="aviso" class="aviso" role="alert" hidden></p>
 
             <p>Já tem conta? <a href="login.html">Entrar</a></p>
             <p><a href="cadastro.html">Voltar à escolha de cadastro</a></p>
