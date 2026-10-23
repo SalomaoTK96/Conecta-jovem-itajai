@@ -3,3 +3,6 @@ node_modules
 .env
 
 /generated/prisma
+
+# Certificado de desenvolvimento (a chave privada nunca vai para o repositório)
+certificados/

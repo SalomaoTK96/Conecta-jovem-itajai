@@ -1,7 +1,15 @@
 const express = require("express");
 const cors = require("cors");
+const forcarHttps = require("./https");
 
 const app = express();
+
+// Na hospedagem quem recebe o HTTPS é o proxy da plataforma, que repassa para cá
+// em HTTP. Sem isso, req.secure fica sempre falso e o redirecionamento entra em loop.
+app.set("trust proxy", 1);
+
+// Vem antes de tudo: nenhuma rota pode responder por HTTP quando o HTTPS é obrigatório.
+app.use(forcarHttps);
 
 // O front roda num endereço diferente do da API, então sem isso o navegador
 // bloqueia a chamada antes mesmo de sair da máquina.
