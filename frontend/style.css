@@ -1554,3 +1554,52 @@ select:focus-visible {
   color: #b42318;
   background: #fef3f2;
 }
+
+/* ==========================================================
+   PERFIL DO JOVEM (US04)
+   ========================================================== */
+
+.auth-form textarea {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  margin-top: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  resize: vertical;
+}
+
+.auth-form textarea:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 1px;
+  border-color: var(--primary);
+}
+
+/* Texto de apoio embaixo do campo, alinhado à esquerda como o campo. */
+.auth-form p.dica {
+  margin: 0.35rem 0 0;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+/* Indicador de perfil completo (RN02). O texto diz a situação; a cor só reforça. */
+.situacao-perfil {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border-left: 4px solid currentColor;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.situacao-perfil--completo {
+  color: #067647;
+  background: #ecfdf3;
+}
+
+.situacao-perfil--incompleto {
+  color: #93370d;
+  background: #fffaeb;
+}
