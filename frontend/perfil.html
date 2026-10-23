@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu perfil | Conecta Jovem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-container">
+
+            <a href="index.html" class="logo" aria-label="Conecta Jovem - Início">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <nav class="nav" aria-label="Navegação principal">
+                <a href="index.html#inicio" class="nav-link">Início</a>
+                <a href="index.html#vagas" class="nav-link">Vagas</a>
+                <a href="index.html#sobre" class="nav-link">Sobre</a>
+            </nav>
+
+            <div class="header-actions">
+
+                <button
+                    class="theme-button"
+                    type="button"
+                    aria-label="Alternar tema"
+                    title="Alternar tema">
+                    🌓
+                </button>
+
+                <a href="login.html" class="login-button">Entrar</a>
+                <a href="cadastro.html" class="register-button">Criar conta</a>
+
+            </div>
+        </div>
+    </header>
+
+    <main class="auth-section">
+        <form class="auth-form" id="form-perfil" aria-labelledby="perfil-titulo" novalidate>
+            <h1 id="perfil-titulo">Meu perfil</h1>
+
+            <!-- RN02: perfil incompleto impede a candidatura, então a tela diz
+                 o que falta. role="status" anuncia a mudança sem interromper. -->
+            <div id="situacao-perfil" class="situacao-perfil" role="status" hidden></div>
+
+            <label for="telefone">Telefone com DDD</label>
+            <input type="tel" id="telefone" name="telefone" autocomplete="tel"
+                   placeholder="(47) 99999-0000" aria-describedby="dica-privado">
+
+            <label for="endereco">Endereço</label>
+            <input type="text" id="endereco" name="endereco" autocomplete="street-address"
+                   maxlength="200" placeholder="Rua, número, bairro e cidade"
+                   aria-describedby="dica-privado">
+
+            <p id="dica-privado" class="dica">
+                Telefone e endereço não aparecem no mural. A empresa só vê seus contatos
+                quando você se candidata a uma vaga dela.
+            </p>
+
+            <label for="habilidades">Habilidades</label>
+            <textarea id="habilidades" name="habilidades" rows="4" maxlength="500"
+                      aria-describedby="dica-habilidades"></textarea>
+            <p id="dica-habilidades" class="dica">
+                O que você sabe fazer, mesmo fora da escola. Exemplo: pacote Office,
+                atendimento ao público, inglês básico, organização.
+            </p>
+
+            <button type="submit" class="register-button">
+                Salvar perfil
+            </button>
+
+            <p id="aviso" class="aviso" role="alert" hidden></p>
+        </form>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+
+            <a href="index.html" class="logo footer-logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <p>Conectando jovens a oportunidades de estágio e aprendizagem.</p>
+
+            <span class="footer-copy">© 2026 Conecta Jovem</span>
+
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

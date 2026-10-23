@@ -273,6 +273,16 @@ async function mostrarQuemEstaLogado() {
         window.location.href = "index.html";
     });
 
+    // Só jovem tem perfil para preencher (US04).
+    if (usuario.perfil === "JOVEM") {
+        const meuPerfil = document.createElement("a");
+        meuPerfil.href = "perfil.html";
+        meuPerfil.className = "login-button";
+        meuPerfil.textContent = "Meu perfil";
+        acoes.append(saudacao, meuPerfil, sair);
+        return;
+    }
+
     acoes.append(saudacao, sair);
 }
 
@@ -325,4 +335,116 @@ if (formularioDeLogin) {
             botao.textContent = textoOriginal;
         }
     });
+}
+
+// =========================
+// PERFIL DO JOVEM (US04)
+// =========================
+
+const formularioDePerfil = document.querySelector("#form-perfil");
+
+// Mostra se o perfil está completo ou o que falta (RN02).
+function mostrarSituacaoDoPerfil(situacao) {
+    const caixa = document.querySelector("#situacao-perfil");
+
+    if (situacao.completo) {
+        caixa.className = "situacao-perfil situacao-perfil--completo";
+        caixa.textContent = "Perfil completo.";
+    } else {
+        caixa.className = "situacao-perfil situacao-perfil--incompleto";
+        caixa.innerHTML =
+            "<strong>Perfil incompleto.</strong> Sem estes dados você ainda não consegue se candidatar: " +
+            situacao.faltando.join(", ") + ".";
+    }
+
+    caixa.hidden = false;
+}
+
+function preencherPerfil(formulario, perfil) {
+    ["telefone", "endereco", "habilidades"].forEach((campo) => {
+        formulario.querySelector(`#${campo}`).value = perfil[campo] || "";
+    });
+    mostrarSituacaoDoPerfil(perfil.situacao);
+}
+
+if (formularioDePerfil) {
+    const aviso = formularioDePerfil.querySelector("#aviso");
+    const botao = formularioDePerfil.querySelector("button[type=submit]");
+
+    // Sem login não há perfil para mostrar.
+    if (!pegarToken()) {
+        window.location.href = "login.html";
+    }
+
+    // Trata as respostas que não são de sucesso do mesmo jeito no carregar e no salvar.
+    function avisarRecusa(resposta, corpo, titulo) {
+        if (resposta.status === 401) {
+            esquecerToken();
+            window.location.href = "login.html";
+            return;
+        }
+
+        if (resposta.status === 403) {
+            botao.disabled = true;
+            mostrarAviso(aviso, "erro", "O perfil é só para contas de jovem.");
+            return;
+        }
+
+        const mensagens = (corpo.erros || []).map((e) => e.mensagem);
+        mostrarAviso(aviso, "erro", titulo, mensagens);
+    }
+
+    async function carregarPerfil() {
+        try {
+            const resposta = await chamarComToken("/perfil");
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                preencherPerfil(formularioDePerfil, corpo);
+                return;
+            }
+
+            avisarRecusa(resposta, corpo, "Não foi possível abrir o perfil.");
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    formularioDePerfil.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        aviso.hidden = true;
+
+        const textoOriginal = botao.textContent;
+        botao.disabled = true;
+        botao.textContent = "Salvando...";
+
+        try {
+            const resposta = await chamarComToken("/perfil", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    telefone: formularioDePerfil.querySelector("#telefone").value,
+                    endereco: formularioDePerfil.querySelector("#endereco").value,
+                    habilidades: formularioDePerfil.querySelector("#habilidades").value,
+                }),
+            });
+
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                preencherPerfil(formularioDePerfil, corpo);
+                mostrarAviso(aviso, "sucesso", "Perfil salvo.");
+                return;
+            }
+
+            avisarRecusa(resposta, corpo, "Não foi possível salvar o perfil:");
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        } finally {
+            botao.disabled = false;
+            botao.textContent = textoOriginal;
+        }
+    });
+
+    carregarPerfil();
 }
