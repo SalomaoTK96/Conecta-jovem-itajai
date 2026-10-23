@@ -26,6 +26,7 @@ app.get("/saude", (req, res) => {
 // As rotas de cada item do backlog entram aqui embaixo, uma linha por assunto.
 app.use("/jovens", require("./rotas/jovens"));
 app.use("/sessao", require("./rotas/sessao"));
+app.use("/perfil", require("./rotas/perfil"));
 
 // O mesmo servidor entrega as telas. Em desenvolvimento isso evita precisar de
 // dois programas no ar, e a tela passa a falar com a API no mesmo endereço.
