@@ -3,3 +3,6 @@ node_modules
 .env
 
 /generated/prisma
+
+# Documentos enviados pelas empresas (US06). São dados de terceiros: nunca no Git.
+uploads/

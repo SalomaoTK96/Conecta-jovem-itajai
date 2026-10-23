@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validação da empresa | Conecta Jovem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-container">
+
+            <a href="index.html" class="logo" aria-label="Conecta Jovem - Início">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <nav class="nav" aria-label="Navegação principal">
+                <a href="index.html#inicio" class="nav-link">Início</a>
+                <a href="index.html#vagas" class="nav-link">Vagas</a>
+                <a href="index.html#sobre" class="nav-link">Sobre</a>
+            </nav>
+
+            <div class="header-actions">
+
+                <button
+                    class="theme-button"
+                    type="button"
+                    aria-label="Alternar tema"
+                    title="Alternar tema">
+                    🌓
+                </button>
+
+                <a href="login.html" class="login-button">Entrar</a>
+                <a href="cadastro.html" class="register-button">Criar conta</a>
+
+            </div>
+        </div>
+    </header>
+
+    <main class="auth-section">
+        <form class="auth-form" id="form-validacao" aria-labelledby="validacao-titulo"
+              enctype="multipart/form-data" novalidate>
+            <h1 id="validacao-titulo">Validação da empresa</h1>
+
+            <!-- Situação do pedido. role="status" anuncia quando muda. -->
+            <div id="situacao-validacao" class="situacao-validacao" role="status" hidden></div>
+
+            <p class="dica" id="explicacao-validacao">
+                Para publicar vagas, a equipe do Conecta Jovem confere os documentos da
+                empresa. Envie os arquivos abaixo e acompanhe a análise por esta tela.
+            </p>
+
+            <!-- Os campos de arquivo são montados pelo script a partir da lista
+                 de documentos exigidos que a API devolve, para a tela e a API
+                 nunca discordarem do que é pedido. -->
+            <fieldset id="documentos-exigidos" class="documentos-exigidos" hidden>
+                <legend>Documentos</legend>
+                <p class="dica" id="regras-arquivo"></p>
+                <div id="campos-documentos"></div>
+            </fieldset>
+
+            <button type="submit" class="register-button" hidden>
+                Enviar documentos
+            </button>
+
+            <p id="aviso" class="aviso" role="alert" hidden></p>
+        </form>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+
+            <a href="index.html" class="logo footer-logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <p>Conectando jovens a oportunidades de estágio e aprendizagem.</p>
+
+            <span class="footer-copy">© 2026 Conecta Jovem</span>
+
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
