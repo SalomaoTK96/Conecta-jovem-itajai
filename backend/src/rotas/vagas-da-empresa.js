@@ -111,6 +111,21 @@ async function vagaDaEmpresa(req, res, next) {
   }
 }
 
+// Encerrar e remover não exigem empresa validada: se a validação for revista,
+// a empresa ainda precisa conseguir tirar as vagas do ar.
+async function empresaLogada(req, res, next) {
+  try {
+    const empresa = await empresaDoUsuario(req.usuario.id);
+    if (!empresa) return res.status(401).json(erro("Sessão inválida."));
+
+    req.empresa = empresa;
+    next();
+  } catch (falha) {
+    console.error("Falha ao buscar a empresa:", falha);
+    return res.status(500).json(erro("Não foi possível conferir a empresa agora."));
+  }
+}
+
 // PUT /empresas/vagas/:id -> edita uma vaga aberta
 rotas.put("/:id", exigirEmpresaValidada, vagaDaEmpresa, async (req, res) => {
   if (!podeEditar(req.vaga)) {
@@ -131,6 +146,39 @@ rotas.put("/:id", exigirEmpresaValidada, vagaDaEmpresa, async (req, res) => {
   } catch (falha) {
     console.error("Falha ao editar a vaga:", falha);
     return res.status(500).json(erro("Não foi possível salvar a vaga."));
+  }
+});
+
+// POST /empresas/vagas/:id/encerrar -> para de aceitar candidaturas
+rotas.post("/:id/encerrar", empresaLogada, vagaDaEmpresa, async (req, res) => {
+  try {
+    const vaga = await banco.vaga.update({
+      where: { id: req.vaga.id },
+      data: { status: "ENCERRADA" },
+      include: CONTAR_CANDIDATURAS,
+    });
+
+    return res.json(vagaParaTela(vaga));
+  } catch (falha) {
+    console.error("Falha ao encerrar a vaga:", falha);
+    return res.status(500).json(erro("Não foi possível encerrar a vaga."));
+  }
+});
+
+// DELETE /empresas/vagas/:id -> tira a vaga da lista e do mural
+// Não apaga a linha do banco: quem se candidatou continua vendo a candidatura
+// e o histórico (US12). A vaga também é encerrada, para não aceitar mais ninguém.
+rotas.delete("/:id", empresaLogada, vagaDaEmpresa, async (req, res) => {
+  try {
+    await banco.vaga.update({
+      where: { id: req.vaga.id },
+      data: { status: "ENCERRADA", removidaEm: new Date() },
+    });
+
+    return res.status(204).end();
+  } catch (falha) {
+    console.error("Falha ao remover a vaga:", falha);
+    return res.status(500).json(erro("Não foi possível remover a vaga."));
   }
 });
 
