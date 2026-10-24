@@ -195,6 +195,10 @@ model Vaga {
   expiraEm   DateTime // RN06: passou o prazo, a vaga é encerrada
   criadaEm   DateTime   @default(now())
 
+  // US08: remover não apaga. A vaga some do mural e da lista da empresa, mas
+  // as candidaturas e o histórico dos jovens continuam existindo.
+  removidaEm DateTime?
+
   empresa      Empresa       @relation(fields: [empresaId], references: [id])
   candidaturas Candidatura[]
 
