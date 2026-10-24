@@ -1,8 +1,11 @@
+const path = require("node:path");
+
 const express = require("express");
 
 const banco = require("../banco");
 const { exigirLogin, exigirPerfil } = require("../seguranca/porta");
 const { DOCUMENTOS_EXIGIDOS } = require("../empresas/validacao");
+const { PASTA } = require("../empresas/arquivos");
 
 const rotas = express.Router();
 
@@ -102,6 +105,38 @@ rotas.get("/:id", async (req, res) => {
   } catch (falha) {
     console.error("Falha ao abrir a solicitação:", falha);
     return res.status(500).json(erro("Não foi possível abrir a solicitação."));
+  }
+});
+
+// GET /admin/validacoes/:id/documentos/:documentoId -> o arquivo para o admin ver
+// O documento precisa ser daquela solicitação. Sem essa conferência, trocar o
+// número no endereço abriria o documento de qualquer empresa.
+rotas.get("/:id/documentos/:documentoId", async (req, res) => {
+  const id = lerId(req.params.id);
+  const documentoId = lerId(req.params.documentoId);
+  if (!id || !documentoId) return res.status(404).json(erro("Documento não encontrado."));
+
+  try {
+    const documento = await banco.documento.findFirst({
+      where: { id: documentoId, solicitacaoId: id },
+    });
+    if (!documento) return res.status(404).json(erro("Documento não encontrado."));
+
+    // path.basename garante que o nome guardado não sai da pasta de documentos.
+    const arquivo = path.join(PASTA, path.basename(documento.arquivo));
+
+    // Abre na aba do navegador em vez de baixar, e o nome sorteado não
+    // revela nada sobre a empresa.
+    res.set("Content-Disposition", "inline");
+    res.set("X-Content-Type-Options", "nosniff");
+    return res.sendFile(arquivo, (falha) => {
+      if (falha && !res.headersSent) {
+        res.status(404).json(erro("O arquivo deste documento não está mais no servidor."));
+      }
+    });
+  } catch (falha) {
+    console.error("Falha ao abrir o documento:", falha);
+    return res.status(500).json(erro("Não foi possível abrir o documento."));
   }
 });
 
