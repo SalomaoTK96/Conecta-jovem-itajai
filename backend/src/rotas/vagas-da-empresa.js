@@ -4,7 +4,7 @@ const banco = require("../banco");
 const { exigirLogin, exigirPerfil } = require("../seguranca/porta");
 const { exigirEmpresaValidada } = require("../seguranca/empresa-validada");
 const { podePublicarVagas } = require("../empresas/validacao");
-const { AREAS, TIPOS, conferirVaga } = require("../vagas/regras");
+const { AREAS, TIPOS, conferirVaga, podeEditar } = require("../vagas/regras");
 const { encerrarVagasVencidas } = require("../vagas/encerrar-vencidas");
 
 const rotas = express.Router();
@@ -82,6 +82,55 @@ rotas.post("/", exigirEmpresaValidada, async (req, res) => {
   } catch (falha) {
     console.error("Falha ao cadastrar a vaga:", falha);
     return res.status(500).json(erro("Não foi possível cadastrar a vaga."));
+  }
+});
+
+function lerId(texto) {
+  const id = Number(texto);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+// Busca a vaga só entre as da empresa logada. Vaga de outra empresa dá o mesmo
+// 404 de vaga inexistente: quem tenta adivinhar números não descobre nada.
+async function vagaDaEmpresa(req, res, next) {
+  const id = lerId(req.params.id);
+  if (!id) return res.status(404).json(erro("Vaga não encontrada."));
+
+  try {
+    const vaga = await banco.vaga.findFirst({
+      where: { id, empresaId: req.empresa.id, removidaEm: null },
+      include: CONTAR_CANDIDATURAS,
+    });
+    if (!vaga) return res.status(404).json(erro("Vaga não encontrada."));
+
+    req.vaga = vaga;
+    next();
+  } catch (falha) {
+    console.error("Falha ao buscar a vaga:", falha);
+    return res.status(500).json(erro("Não foi possível abrir a vaga."));
+  }
+}
+
+// PUT /empresas/vagas/:id -> edita uma vaga aberta
+rotas.put("/:id", exigirEmpresaValidada, vagaDaEmpresa, async (req, res) => {
+  if (!podeEditar(req.vaga)) {
+    return res.status(409).json(erro("Vaga encerrada não pode ser editada. Cadastre uma nova."));
+  }
+
+  const conferencia = conferirVaga(req.body || {});
+  if (!conferencia.valido) return res.status(400).json({ erros: conferencia.erros });
+
+  try {
+    const vaga = await banco.vaga.update({
+      where: { id: req.vaga.id },
+      data: conferencia.vaga,
+      include: CONTAR_CANDIDATURAS,
+    });
+
+    return res.json(vagaParaTela(vaga));
+  } catch (falha) {
+    console.error("Falha ao editar a vaga:", falha);
+    return res.status(500).json(erro("Não foi possível salvar a vaga."));
   }
 });
 
