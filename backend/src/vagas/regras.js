@@ -5,7 +5,7 @@ const TIPOS = ["APRENDIZAGEM", "ESTAGIO"];
 
 // Áreas fixas para o filtro do mural (US09) funcionar. Com texto livre, a mesma
 // área apareceria escrita de dez jeitos e a busca não acharia nada.
-// A tela usa esta mesma lista; se mudar aqui, muda lá também.
+// A tela recebe esta lista da API, então basta mudar aqui.
 const AREAS = [
   "Administração",
   "Atendimento e vendas",
