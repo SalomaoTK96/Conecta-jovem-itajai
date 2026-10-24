@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validar empresas | Conecta Jovem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-container">
+
+            <a href="index.html" class="logo" aria-label="Conecta Jovem - Início">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <nav class="nav" aria-label="Navegação principal">
+                <a href="index.html#inicio" class="nav-link">Início</a>
+                <a href="index.html#vagas" class="nav-link">Vagas</a>
+                <a href="index.html#sobre" class="nav-link">Sobre</a>
+            </nav>
+
+            <div class="header-actions">
+
+                <button
+                    class="theme-button"
+                    type="button"
+                    aria-label="Alternar tema"
+                    title="Alternar tema">
+                    🌓
+                </button>
+
+                <a href="login.html" class="login-button">Entrar</a>
+                <a href="cadastro.html" class="register-button">Criar conta</a>
+
+            </div>
+        </div>
+    </header>
+
+    <main class="auth-section">
+        <section class="auth-form painel-admin" aria-labelledby="admin-titulo">
+            <h1 id="admin-titulo">Validar empresas</h1>
+
+            <p class="dica">
+                Confira os documentos de cada empresa antes de liberar a publicação de
+                vagas. Os pedidos mais antigos aparecem primeiro.
+            </p>
+
+            <!-- Fila de pedidos pendentes. Montada pelo script a partir da API. -->
+            <h2 id="fila-titulo">Esperando análise</h2>
+            <ul id="fila-validacoes" class="fila-validacoes" aria-labelledby="fila-titulo"></ul>
+            <p id="fila-vazia" class="dica" hidden>Nenhuma empresa esperando validação.</p>
+
+            <!-- Análise de um pedido. Fica escondida até o admin escolher um da fila. -->
+            <section id="analise" class="analise" aria-labelledby="analise-titulo" hidden>
+                <h2 id="analise-titulo"></h2>
+
+                <dl id="dados-empresa" class="dados-empresa"></dl>
+
+                <h3>Documentos</h3>
+                <ul id="documentos-empresa" class="documentos-empresa"></ul>
+
+                <!-- Aparece quando outro admin já decidiu este pedido. -->
+                <div id="decisao-registrada" class="situacao-validacao" role="status" hidden></div>
+
+                <form id="form-decisao" novalidate>
+                    <label for="motivo">Motivo</label>
+                    <textarea id="motivo" name="motivo" rows="3" maxlength="500"
+                              aria-describedby="dica-motivo"></textarea>
+                    <p id="dica-motivo" class="dica">
+                        Obrigatório para rejeitar ou pedir documentos. A empresa recebe
+                        este texto, então diga o que ela precisa corrigir.
+                    </p>
+
+                    <div class="botoes-decisao">
+                        <button type="submit" class="register-button" value="APROVAR">Aprovar</button>
+                        <button type="submit" class="secondary-button" value="PEDIR_DOCUMENTOS">Pedir documentos</button>
+                        <button type="submit" class="botao-rejeitar" value="REJEITAR">Rejeitar</button>
+                    </div>
+                </form>
+            </section>
+
+            <p id="aviso" class="aviso" role="alert" hidden></p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+
+            <a href="index.html" class="logo footer-logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <p>Conectando jovens a oportunidades de estágio e aprendizagem.</p>
+
+            <span class="footer-copy">© 2026 Conecta Jovem</span>
+
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
