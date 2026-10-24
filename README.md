@@ -74,6 +74,18 @@ Para conferir o banco pelo navegador:
 npx prisma studio
 ```
 
+### Conta de administrador
+
+Não existe tela para criar administrador, para ninguém conseguir se cadastrar
+como admin pelo site. Preencha `ADMIN_EMAIL` e `ADMIN_SENHA` no `.env` e rode
+uma vez, dentro de `backend/`:
+
+```bash
+npm run criar-admin
+```
+
+Depois é só entrar pela tela de login com esse e-mail e senha.
+
 ### HTTPS local (opcional)
 
 No dia a dia a API roda em HTTP. Para testar com HTTPS (TS02), gere um certificado de
