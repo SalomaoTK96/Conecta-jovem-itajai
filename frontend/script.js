@@ -259,7 +259,11 @@ async function mostrarQuemEstaLogado() {
         validacao.href = "validacao-empresa.html";
         validacao.className = "login-button";
         validacao.textContent = "Validação";
-        acoes.append(saudacao, validacao, sair);
+        const vagas = document.createElement("a");
+        vagas.href = "minhas-vagas.html";
+        vagas.className = "login-button";
+        vagas.textContent = "Minhas vagas";
+        acoes.append(saudacao, vagas, validacao, sair);
         return;
     }
 
@@ -1026,4 +1030,238 @@ if (painelDoAdmin) {
     });
 
     carregarFila();
+}
+
+// =========================
+// MINHAS VAGAS (US08)
+// =========================
+
+const painelDeVagas = document.querySelector(".painel-vagas");
+
+const NOMES_DOS_TIPOS = { APRENDIZAGEM: "Aprendizagem", ESTAGIO: "Estágio" };
+
+// A API guarda o fim do dia em UTC. Para o campo de data, volta para o dia
+// no horário de Itajaí.
+function diaDoPrazo(texto) {
+    return new Date(texto).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+}
+
+function hojeEmItajai() {
+    return new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+}
+
+if (painelDeVagas) {
+    const aviso = painelDeVagas.querySelector("#aviso");
+    const formulario = painelDeVagas.querySelector("#form-vaga");
+    const tituloDoFormulario = painelDeVagas.querySelector("#form-vaga-titulo");
+    const botaoSalvar = formulario.querySelector("button[type=submit]");
+    const cancelar = painelDeVagas.querySelector("#cancelar-edicao");
+    const lista = painelDeVagas.querySelector("#lista-vagas");
+    const semVagas = painelDeVagas.querySelector("#sem-vagas");
+    let editando = null;
+    let podePublicar = false;
+
+    if (!pegarToken()) {
+        window.location.href = "login.html";
+    }
+
+    function avisarRecusa(resposta, corpo, titulo) {
+        if (resposta.status === 401) {
+            esquecerToken();
+            window.location.href = "login.html";
+            return;
+        }
+
+        const mensagens = (corpo.erros || []).map((e) => e.mensagem);
+
+        if (resposta.status === 403 && !mensagens.length) {
+            mostrarAviso(aviso, "erro", "Esta tela é só para contas de empresa.");
+            return;
+        }
+
+        mostrarAviso(aviso, "erro", titulo, mensagens);
+    }
+
+    async function chamar(caminho, opcoes, tituloDoErro) {
+        try {
+            const resposta = await chamarComToken(caminho, opcoes);
+            const corpo = resposta.status === 204 ? {} : await resposta.json().catch(() => ({}));
+            if (resposta.ok) return corpo;
+            avisarRecusa(resposta, corpo, tituloDoErro);
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+        return null;
+    }
+
+    function preencherAreas(areas) {
+        const campo = formulario.querySelector("#area");
+        if (campo.options.length) return;
+        campo.replaceChildren(...areas.map((area) => new Option(area, area)));
+    }
+
+    function voltarParaNovaVaga() {
+        editando = null;
+        formulario.reset();
+        tituloDoFormulario.textContent = "Nova vaga";
+        botaoSalvar.textContent = "Publicar vaga";
+        cancelar.hidden = true;
+    }
+
+    function editarVaga(vaga) {
+        editando = vaga.id;
+        ["titulo", "tipo", "area", "cidade", "descricao"].forEach((campo) => {
+            formulario.querySelector(`#${campo}`).value = vaga[campo];
+        });
+        formulario.querySelector("#requisitos").value = vaga.requisitos || "";
+        formulario.querySelector("#expiraEm").value = diaDoPrazo(vaga.expiraEm);
+        tituloDoFormulario.textContent = `Editar vaga: ${vaga.titulo}`;
+        botaoSalvar.textContent = "Salvar alterações";
+        cancelar.hidden = false;
+        formulario.scrollIntoView({ behavior: "smooth", block: "start" });
+        formulario.querySelector("#titulo").focus();
+    }
+
+    // Remover pede um segundo clique em vez de um alert, que trava a página.
+    // Se o usuário não confirmar em 5 segundos, o botão volta ao normal.
+    function botaoComConfirmacao(texto, textoDeConfirmacao, acao) {
+        const botao = document.createElement("button");
+        botao.type = "button";
+        botao.className = "botao-rejeitar";
+        botao.textContent = texto;
+        let espera = null;
+
+        botao.addEventListener("click", () => {
+            if (!espera) {
+                botao.textContent = textoDeConfirmacao;
+                espera = setTimeout(() => {
+                    botao.textContent = texto;
+                    espera = null;
+                }, 5000);
+                return;
+            }
+
+            clearTimeout(espera);
+            espera = null;
+            acao();
+        });
+
+        return botao;
+    }
+
+    function botaoSimples(texto, rotuloAcessivel, acao) {
+        const botao = document.createElement("button");
+        botao.type = "button";
+        botao.className = "secondary-button";
+        botao.textContent = texto;
+        botao.setAttribute("aria-label", rotuloAcessivel);
+        botao.addEventListener("click", acao);
+        return botao;
+    }
+
+    // Monta o cartão de uma vaga sempre com textContent: título e descrição
+    // foram digitados pela empresa e não podem virar código na página.
+    function cartaoDaVaga(vaga) {
+        const item = document.createElement("li");
+        item.className = "cartao-vaga";
+
+        const titulo = document.createElement("h3");
+        titulo.textContent = vaga.titulo;
+
+        const aberta = vaga.status === "ABERTA";
+        const selo = document.createElement("span");
+        selo.className = `selo-vaga selo-vaga--${aberta ? "aberta" : "encerrada"}`;
+        selo.textContent = aberta ? "Aberta" : "Encerrada";
+
+        const resumo = document.createElement("p");
+        resumo.textContent = `${NOMES_DOS_TIPOS[vaga.tipo]} · ${vaga.area} · ${vaga.cidade}`;
+
+        const prazo = document.createElement("p");
+        prazo.textContent =
+            `Recebe candidaturas até ${formatarData(vaga.expiraEm)} · ` +
+            `${vaga.candidaturas} candidatura(s)`;
+
+        const acoes = document.createElement("div");
+        acoes.className = "acoes-vaga";
+
+        if (aberta && podePublicar) {
+            acoes.append(botaoSimples("Editar", `Editar ${vaga.titulo}`, () => editarVaga(vaga)));
+        }
+
+        if (aberta) {
+            acoes.append(
+                botaoSimples("Encerrar", `Encerrar ${vaga.titulo}`, () => encerrarVaga(vaga))
+            );
+        }
+
+        acoes.append(
+            botaoComConfirmacao("Remover", "Confirmar remoção", () => removerVaga(vaga))
+        );
+
+        item.append(titulo, selo, resumo, prazo, acoes);
+        return item;
+    }
+
+    async function carregarVagas() {
+        const dados = await chamar("/empresas/vagas", {}, "Não foi possível carregar suas vagas.");
+        if (!dados) return;
+
+        podePublicar = dados.podePublicarVagas;
+        painelDeVagas.querySelector("#aviso-validacao").hidden = podePublicar;
+        formulario.hidden = !podePublicar;
+        preencherAreas(dados.opcoes.areas);
+        formulario.querySelector("#expiraEm").min = hojeEmItajai();
+
+        lista.replaceChildren(...dados.vagas.map(cartaoDaVaga));
+        semVagas.hidden = dados.vagas.length > 0;
+    }
+
+    async function encerrarVaga(vaga) {
+        aviso.hidden = true;
+        const feito = await chamar(`/empresas/vagas/${vaga.id}/encerrar`, { method: "POST" },
+            "Não foi possível encerrar a vaga.");
+        if (!feito) return;
+        if (editando === vaga.id) voltarParaNovaVaga();
+        mostrarAviso(aviso, "sucesso", `A vaga "${vaga.titulo}" foi encerrada e não recebe mais candidaturas.`);
+        carregarVagas();
+    }
+
+    async function removerVaga(vaga) {
+        aviso.hidden = true;
+        const feito = await chamar(`/empresas/vagas/${vaga.id}`, { method: "DELETE" },
+            "Não foi possível remover a vaga.");
+        if (!feito) return;
+        if (editando === vaga.id) voltarParaNovaVaga();
+        mostrarAviso(aviso, "sucesso", `A vaga "${vaga.titulo}" foi removida.`);
+        carregarVagas();
+    }
+
+    cancelar.addEventListener("click", voltarParaNovaVaga);
+
+    formulario.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        aviso.hidden = true;
+
+        const dados = Object.fromEntries(new FormData(formulario));
+        const textoOriginal = botaoSalvar.textContent;
+        botaoSalvar.disabled = true;
+        botaoSalvar.textContent = "Salvando...";
+
+        const caminho = editando ? `/empresas/vagas/${editando}` : "/empresas/vagas";
+        const salva = await chamar(caminho, {
+            method: editando ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dados),
+        }, editando ? "Não foi possível salvar a vaga:" : "Não foi possível publicar a vaga:");
+
+        botaoSalvar.disabled = false;
+        botaoSalvar.textContent = textoOriginal;
+        if (!salva) return;
+
+        mostrarAviso(aviso, "sucesso", editando ? "Alterações salvas." : "Vaga publicada.");
+        voltarParaNovaVaga();
+        carregarVagas();
+    });
+
+    carregarVagas();
 }
