@@ -6,6 +6,12 @@ const banco = require("../banco");
 const { exigirLogin, exigirPerfil } = require("../seguranca/porta");
 const { DOCUMENTOS_EXIGIDOS } = require("../empresas/validacao");
 const { PASTA } = require("../empresas/arquivos");
+const {
+  DECISOES,
+  conferirDecisao,
+  podeDecidir,
+  mensagemParaEmpresa,
+} = require("../empresas/decisao");
 
 const rotas = express.Router();
 
@@ -137,6 +143,72 @@ rotas.get("/:id/documentos/:documentoId", async (req, res) => {
   } catch (falha) {
     console.error("Falha ao abrir o documento:", falha);
     return res.status(500).json(erro("Não foi possível abrir o documento."));
+  }
+});
+
+// POST /admin/validacoes/:id/decisao -> aprova, rejeita ou pede documentos
+// Corpo: { decisao: "APROVAR" | "REJEITAR" | "PEDIR_DOCUMENTOS", motivo }
+rotas.post("/:id/decisao", async (req, res) => {
+  const id = lerId(req.params.id);
+  if (!id) return res.status(404).json(erro("Solicitação não encontrada."));
+
+  const conferencia = conferirDecisao(req.body || {});
+  if (!conferencia.valido) return res.status(400).json({ erros: conferencia.erros });
+
+  const { decisao, motivo } = conferencia;
+  const efeito = DECISOES[decisao];
+
+  try {
+    const solicitacao = await buscarSolicitacao(id);
+    if (!solicitacao) return res.status(404).json(erro("Solicitação não encontrada."));
+
+    const jaDecidida = (atual) =>
+      res.status(409).json({
+        erros: [{ campo: null, mensagem: "Esta solicitação já foi analisada por outro administrador." }],
+        solicitacao: detalheDaSolicitacao(atual),
+      });
+
+    if (!podeDecidir(solicitacao.status)) return jaDecidida(solicitacao);
+
+    // Tudo junto: decisão, status da empresa e notificação. O updateMany só
+    // muda se o pedido ainda estiver PENDENTE; se dois admins clicarem ao mesmo
+    // tempo, o segundo encontra 0 linhas alteradas e recebe o aviso, em vez de
+    // sobrescrever a decisão do primeiro.
+    const decidiu = await banco.$transaction(async (tx) => {
+      const { count } = await tx.solicitacaoValidacao.updateMany({
+        where: { id, status: "PENDENTE" },
+        data: {
+          status: efeito.statusSolicitacao,
+          motivo,
+          analisadaEm: new Date(),
+          analisadoPorId: req.usuario.id, // RN10: quem decidiu, para auditoria
+        },
+      });
+
+      if (count === 0) return false;
+
+      await tx.empresa.update({
+        where: { id: solicitacao.empresaId },
+        data: { status: efeito.statusEmpresa },
+      });
+
+      await tx.notificacao.create({
+        data: {
+          destinatarioId: solicitacao.empresa.usuarioId,
+          mensagem: mensagemParaEmpresa(decisao, motivo),
+        },
+      });
+
+      return true;
+    });
+
+    const atualizada = await buscarSolicitacao(id);
+    if (!decidiu) return jaDecidida(atualizada);
+
+    return res.json(detalheDaSolicitacao(atualizada));
+  } catch (falha) {
+    console.error("Falha ao registrar a decisão:", falha);
+    return res.status(500).json(erro("Não foi possível registrar a decisão."));
   }
 });
 
