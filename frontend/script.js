@@ -263,6 +263,17 @@ async function mostrarQuemEstaLogado() {
         return;
     }
 
+    // O admin vai direto para a fila de validação (US07).
+    if (usuario.perfil === "ADMIN") {
+        saudacao.textContent = "Olá, Administrador";
+        const fila = document.createElement("a");
+        fila.href = "admin-validacoes.html";
+        fila.className = "login-button";
+        fila.textContent = "Validar empresas";
+        acoes.append(saudacao, fila, sair);
+        return;
+    }
+
     // Só jovem tem perfil para preencher (US04).
     if (usuario.perfil === "JOVEM") {
         const meuPerfil = document.createElement("a");
@@ -770,4 +781,249 @@ if (formularioDePerfil) {
     });
 
     carregarPerfil();
+}
+
+// =========================
+// VALIDAÇÃO DE EMPRESAS PELO ADMIN (US07)
+// =========================
+
+const painelDoAdmin = document.querySelector(".painel-admin");
+
+const NOMES_DAS_DECISOES = {
+    APROVADA: "aprovada",
+    REJEITADA: "rejeitada",
+    DOCUMENTOS_PENDENTES: "devolvida pedindo documentos",
+};
+
+function formatarDataEHora(texto) {
+    return new Date(texto).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
+// Uma linha "rótulo: valor" da lista de dados da empresa. Sempre textContent:
+// o que a empresa digitou no cadastro não pode virar código na tela do admin.
+function linhaDeDado(rotulo, valor) {
+    const termo = document.createElement("dt");
+    termo.textContent = rotulo;
+    const descricao = document.createElement("dd");
+    descricao.textContent = valor || "não informado";
+    return [termo, descricao];
+}
+
+if (painelDoAdmin) {
+    const aviso = painelDoAdmin.querySelector("#aviso");
+    const fila = painelDoAdmin.querySelector("#fila-validacoes");
+    const filaVazia = painelDoAdmin.querySelector("#fila-vazia");
+    const analise = painelDoAdmin.querySelector("#analise");
+    const formulario = painelDoAdmin.querySelector("#form-decisao");
+    const decisaoRegistrada = painelDoAdmin.querySelector("#decisao-registrada");
+    let aberta = null;
+
+    if (!pegarToken()) {
+        window.location.href = "login.html";
+    }
+
+    function avisarRecusa(resposta, corpo, titulo) {
+        if (resposta.status === 401) {
+            esquecerToken();
+            window.location.href = "login.html";
+            return;
+        }
+
+        if (resposta.status === 403) {
+            mostrarAviso(aviso, "erro", "Esta tela é só para administradores.");
+            return;
+        }
+
+        const mensagens = (corpo.erros || []).map((e) => e.mensagem);
+        mostrarAviso(aviso, "erro", titulo, mensagens);
+    }
+
+    function montarFila(pendentes) {
+        fila.replaceChildren();
+        filaVazia.hidden = pendentes.length > 0;
+
+        pendentes.forEach((pedido) => {
+            const item = document.createElement("li");
+            const botao = document.createElement("button");
+            botao.type = "button";
+            botao.textContent =
+                `${pedido.razaoSocial} · CNPJ ${formatarCnpj(pedido.cnpj)} · ` +
+                `enviado em ${formatarData(pedido.enviadaEm)} · ${pedido.documentos} documento(s)`;
+            if (aberta && aberta.id === pedido.id) botao.setAttribute("aria-current", "true");
+            botao.addEventListener("click", () => abrirSolicitacao(pedido.id));
+            item.append(botao);
+            fila.append(item);
+        });
+    }
+
+    async function carregarFila() {
+        try {
+            const resposta = await chamarComToken("/admin/validacoes");
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                montarFila(corpo);
+                return;
+            }
+
+            avisarRecusa(resposta, corpo, "Não foi possível carregar a fila.");
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    // O documento só sai da API com o token, então não dá para usar um link
+    // simples. A aba abre antes da chamada para o navegador não bloquear.
+    async function abrirDocumento(solicitacaoId, documento) {
+        const aba = window.open("", "_blank");
+
+        try {
+            const resposta = await chamarComToken(
+                `/admin/validacoes/${solicitacaoId}/documentos/${documento.id}`
+            );
+
+            if (!resposta.ok) {
+                if (aba) aba.close();
+                const corpo = await resposta.json().catch(() => ({}));
+                avisarRecusa(resposta, corpo, `Não foi possível abrir ${documento.nome}.`);
+                return;
+            }
+
+            const endereco = URL.createObjectURL(await resposta.blob());
+            if (aba) aba.location.href = endereco;
+            else window.location.href = endereco;
+        } catch (erro) {
+            if (aba) aba.close();
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    // Se o pedido já foi decidido, esconde os botões e mostra quem decidiu.
+    function mostrarDecisao(solicitacao) {
+        const pendente = solicitacao.status === "PENDENTE";
+        formulario.hidden = !pendente;
+        decisaoRegistrada.hidden = pendente;
+        if (pendente) return;
+
+        decisaoRegistrada.replaceChildren();
+        const titulo = document.createElement("strong");
+        titulo.textContent = `Solicitação ${NOMES_DAS_DECISOES[solicitacao.status] || solicitacao.status}.`;
+        decisaoRegistrada.append(titulo);
+
+        if (solicitacao.decisao) {
+            const quem = document.createElement("p");
+            quem.textContent =
+                `Decidido por ${solicitacao.decisao.analisadoPor || "um administrador"} ` +
+                `em ${formatarDataEHora(solicitacao.decisao.analisadaEm)}.`;
+            decisaoRegistrada.append(quem);
+
+            if (solicitacao.decisao.motivo) {
+                const motivo = document.createElement("p");
+                motivo.textContent = `Motivo: ${solicitacao.decisao.motivo}`;
+                decisaoRegistrada.append(motivo);
+            }
+        }
+    }
+
+    function montarAnalise(solicitacao) {
+        aberta = solicitacao;
+        const { empresa } = solicitacao;
+
+        analise.querySelector("#analise-titulo").textContent = empresa.razaoSocial;
+
+        analise.querySelector("#dados-empresa").replaceChildren(
+            ...linhaDeDado("CNPJ", formatarCnpj(empresa.cnpj)),
+            ...linhaDeDado("Responsável", empresa.nomeResponsavel),
+            ...linhaDeDado("E-mail", empresa.email),
+            ...linhaDeDado("Telefone", empresa.telefone),
+            ...linhaDeDado("Pedido enviado em", formatarDataEHora(solicitacao.enviadaEm))
+        );
+
+        const documentos = analise.querySelector("#documentos-empresa");
+        documentos.replaceChildren(
+            ...solicitacao.documentos.map((documento) => {
+                const item = document.createElement("li");
+                const nome = document.createElement("span");
+                nome.textContent = `${documento.nome} (enviado em ${formatarData(documento.enviadoEm)})`;
+                const botao = document.createElement("button");
+                botao.type = "button";
+                botao.className = "secondary-button";
+                botao.textContent = "Abrir";
+                botao.setAttribute("aria-label", `Abrir ${documento.nome}`);
+                botao.addEventListener("click", () => abrirDocumento(solicitacao.id, documento));
+                item.append(nome, botao);
+                return item;
+            })
+        );
+
+        formulario.reset();
+        mostrarDecisao(solicitacao);
+        analise.hidden = false;
+    }
+
+    async function abrirSolicitacao(id) {
+        aviso.hidden = true;
+
+        try {
+            const resposta = await chamarComToken(`/admin/validacoes/${id}`);
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                montarAnalise(corpo);
+                // Recarrega a fila para marcar o pedido aberto e tirar os que
+                // outro admin decidiu enquanto esta tela estava aberta.
+                carregarFila();
+                analise.scrollIntoView({ behavior: "smooth", block: "start" });
+                return;
+            }
+
+            avisarRecusa(resposta, corpo, "Não foi possível abrir a solicitação.");
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    formulario.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        aviso.hidden = true;
+        if (!aberta) return;
+
+        // Cada botão do formulário leva a decisão no próprio value.
+        const decisao = evento.submitter ? evento.submitter.value : "";
+        const motivo = formulario.querySelector("#motivo").value;
+        const botoes = formulario.querySelectorAll("button");
+        botoes.forEach((b) => { b.disabled = true; });
+
+        try {
+            const resposta = await chamarComToken(`/admin/validacoes/${aberta.id}/decisao`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ decisao, motivo }),
+            });
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                montarAnalise(corpo);
+                mostrarAviso(aviso, "sucesso", "Decisão registrada. A empresa foi avisada.");
+                carregarFila();
+                return;
+            }
+
+            // Outro admin decidiu antes: mostra o que ficou registrado.
+            if (resposta.status === 409 && corpo.solicitacao) {
+                montarAnalise(corpo.solicitacao);
+                mostrarAviso(aviso, "erro", "Outro administrador já analisou esta solicitação.");
+                carregarFila();
+                return;
+            }
+
+            avisarRecusa(resposta, corpo, "Não foi possível registrar a decisão:");
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        } finally {
+            botoes.forEach((b) => { b.disabled = false; });
+        }
+    });
+
+    carregarFila();
 }
