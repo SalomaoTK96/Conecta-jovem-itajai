@@ -284,7 +284,11 @@ async function mostrarQuemEstaLogado() {
         meuPerfil.href = "perfil.html";
         meuPerfil.className = "login-button";
         meuPerfil.textContent = "Meu perfil";
-        acoes.append(saudacao, meuPerfil, sair);
+        const meuCurriculo = document.createElement("a");
+        meuCurriculo.href = "curriculo.html";
+        meuCurriculo.className = "login-button";
+        meuCurriculo.textContent = "Meu currículo";
+        acoes.append(saudacao, meuPerfil, meuCurriculo, sair);
         return;
     }
 
@@ -690,9 +694,20 @@ function mostrarSituacaoDoPerfil(situacao) {
         caixa.textContent = "Perfil completo.";
     } else {
         caixa.className = "situacao-perfil situacao-perfil--incompleto";
-        caixa.innerHTML =
-            "<strong>Perfil incompleto.</strong> Sem estes dados você ainda não consegue se candidatar: " +
-            situacao.faltando.join(", ") + ".";
+        const titulo = document.createElement("strong");
+        titulo.textContent = "Perfil incompleto.";
+        caixa.replaceChildren(
+            titulo,
+            ` Sem estes dados você ainda não consegue se candidatar: ${situacao.faltando.join(", ")}.`
+        );
+
+        // O currículo fica em outra tela (US05), então leva o jovem até lá.
+        if (situacao.faltando.includes("Currículo")) {
+            const link = document.createElement("a");
+            link.href = "curriculo.html";
+            link.textContent = "Montar meu currículo";
+            caixa.append(" ", link);
+        }
     }
 
     caixa.hidden = false;
@@ -1264,4 +1279,304 @@ if (painelDeVagas) {
     });
 
     carregarVagas();
+}
+
+// =========================
+// MEU CURRÍCULO (US05)
+// =========================
+
+const painelDoCurriculo = document.querySelector(".painel-curriculo");
+
+// Os campos de cada tipo de item. A tela monta as caixas a partir desta lista,
+// e a mesma lista é usada para ler o que foi digitado na hora de salvar.
+const CAMPOS_DA_ESCOLARIDADE = [
+    { nome: "instituicao", rotulo: "Escola ou instituição", tipo: "text", maximo: 100 },
+    { nome: "curso", rotulo: "Curso ou série", tipo: "text", maximo: 100, exemplo: "Ex.: 2º ano, Técnico em Logística" },
+    { nome: "nivel", rotulo: "Nível", tipo: "select" },
+    { nome: "anoInicio", rotulo: "Ano de início", tipo: "number" },
+    { nome: "anoFim", rotulo: "Ano de conclusão (vazio se ainda cursa)", tipo: "number" },
+];
+
+const CAMPOS_DA_EXPERIENCIA = [
+    { nome: "empresa", rotulo: "Onde foi", tipo: "text", maximo: 100, exemplo: "Ex.: mercado do bairro, igreja, ONG" },
+    { nome: "cargo", rotulo: "O que você fazia", tipo: "text", maximo: 100 },
+    { nome: "inicio", rotulo: "Começou em", tipo: "month" },
+    { nome: "fim", rotulo: "Saiu em (vazio se ainda está)", tipo: "month" },
+    { nome: "descricao", rotulo: "Conte um pouco (opcional)", tipo: "textarea", maximo: 500, largo: true },
+];
+
+function nomeDoMes(texto) {
+    if (!texto) return "";
+    const [ano, mes] = texto.split("-");
+    return `${mes}/${ano}`;
+}
+
+if (painelDoCurriculo) {
+    const aviso = painelDoCurriculo.querySelector("#aviso");
+    const formulario = painelDoCurriculo.querySelector("#form-curriculo");
+    const botaoSalvar = formulario.querySelector("button[type=submit]");
+    const listaDeEscolaridades = painelDoCurriculo.querySelector("#lista-escolaridades");
+    const listaDeExperiencias = painelDoCurriculo.querySelector("#lista-experiencias");
+    const previa = painelDoCurriculo.querySelector("#previa-curriculo");
+    let niveis = [];
+    let nomeDoJovem = "";
+    let contador = 0;
+
+    if (!pegarToken()) {
+        window.location.href = "login.html";
+    }
+
+    function avisarRecusa(resposta, corpo, titulo) {
+        if (resposta.status === 401) {
+            esquecerToken();
+            window.location.href = "login.html";
+            return;
+        }
+
+        if (resposta.status === 403) {
+            botaoSalvar.disabled = true;
+            mostrarAviso(aviso, "erro", "O currículo é só para contas de jovem.");
+            return;
+        }
+
+        const mensagens = (corpo.erros || []).map((e) => e.mensagem);
+        mostrarAviso(aviso, "erro", titulo, mensagens);
+    }
+
+    function mostrarSituacao(completo) {
+        const caixa = painelDoCurriculo.querySelector("#situacao-curriculo");
+        caixa.className = `situacao-perfil situacao-perfil--${completo ? "completo" : "incompleto"}`;
+        caixa.textContent = completo
+            ? "Currículo pronto: ele já conta para o seu perfil completo."
+            : "Para o currículo contar no perfil completo, preencha o objetivo e pelo menos uma escolaridade.";
+        caixa.hidden = false;
+    }
+
+    // Cria um campo com rótulo. O id leva um número único para cada rótulo
+    // apontar para o seu campo, mesmo com vários itens na tela.
+    function criarCampo(definicao, valor) {
+        const id = `item-${contador}-${definicao.nome}`;
+        const caixa = document.createElement("div");
+        caixa.className = definicao.largo ? "campo campo--largo" : "campo";
+
+        const rotulo = document.createElement("label");
+        rotulo.htmlFor = id;
+        rotulo.textContent = definicao.rotulo;
+
+        let campo;
+        if (definicao.tipo === "select") {
+            campo = document.createElement("select");
+            campo.append(...niveis.map((nivel) => new Option(nivel, nivel)));
+        } else if (definicao.tipo === "textarea") {
+            campo = document.createElement("textarea");
+            campo.rows = 2;
+        } else {
+            campo = document.createElement("input");
+            campo.type = definicao.tipo;
+            // Firefox e Safari antigos mostram o campo de mês como texto comum;
+            // o exemplo diz o formato que a API espera.
+            if (definicao.tipo === "month") campo.placeholder = "AAAA-MM";
+            if (definicao.tipo === "number") {
+                campo.min = 1990;
+                campo.max = new Date().getFullYear() + 6;
+                campo.inputMode = "numeric";
+            }
+        }
+
+        campo.id = id;
+        campo.dataset.campo = definicao.nome;
+        if (definicao.maximo) campo.maxLength = definicao.maximo;
+        if (definicao.exemplo) campo.placeholder = definicao.exemplo;
+        if (valor !== undefined && valor !== null) campo.value = valor;
+
+        caixa.append(rotulo, campo);
+        return caixa;
+    }
+
+    // Renumera as legendas depois de remover um item, para "Escolaridade 2"
+    // virar "Escolaridade 1" e bater com as mensagens de erro da API.
+    function renumerar(lista, nome) {
+        lista.querySelectorAll(".item-curriculo").forEach((item, posicao) => {
+            item.querySelector("legend").textContent = `${nome} ${posicao + 1}`;
+            item.querySelector(".botao-rejeitar").setAttribute("aria-label", `Remover ${nome.toLowerCase()} ${posicao + 1}`);
+        });
+    }
+
+    function adicionarItem(lista, nome, campos, dados = {}) {
+        contador += 1;
+        const item = document.createElement("fieldset");
+        item.className = "item-curriculo";
+
+        const legenda = document.createElement("legend");
+        item.append(legenda, ...campos.map((definicao) => criarCampo(definicao, dados[definicao.nome])));
+
+        const remover = document.createElement("button");
+        remover.type = "button";
+        remover.className = "botao-rejeitar";
+        remover.textContent = "Remover";
+        remover.addEventListener("click", () => {
+            item.remove();
+            renumerar(lista, nome);
+            // O foco não pode sumir com o item: volta para o botão de adicionar.
+            lista.parentElement.querySelector(".secondary-button").focus();
+        });
+        item.append(remover);
+
+        lista.append(item);
+        renumerar(lista, nome);
+        return item;
+    }
+
+    function lerItens(lista) {
+        return [...lista.querySelectorAll(".item-curriculo")].map((item) =>
+            Object.fromEntries(
+                [...item.querySelectorAll("[data-campo]")].map((campo) => [campo.dataset.campo, campo.value])
+            )
+        );
+    }
+
+    function lerFormulario() {
+        return {
+            objetivo: formulario.querySelector("#objetivo").value,
+            escolaridades: lerItens(listaDeEscolaridades),
+            experiencias: lerItens(listaDeExperiencias),
+        };
+    }
+
+    function preencher(curriculo) {
+        niveis = curriculo.niveis;
+        formulario.querySelector("#objetivo").value = curriculo.objetivo;
+        listaDeEscolaridades.replaceChildren();
+        listaDeExperiencias.replaceChildren();
+        curriculo.escolaridades.forEach((e) =>
+            adicionarItem(listaDeEscolaridades, "Escolaridade", CAMPOS_DA_ESCOLARIDADE, e));
+        curriculo.experiencias.forEach((e) =>
+            adicionarItem(listaDeExperiencias, "Experiência", CAMPOS_DA_EXPERIENCIA, e));
+        mostrarSituacao(curriculo.completo);
+    }
+
+    // Monta a prévia com o que está digitado agora, mesmo antes de salvar.
+    // Tudo por textContent: o que o jovem digitou nunca vira código na página.
+    function montarPrevia() {
+        const dados = lerFormulario();
+        const conteudo = previa.querySelector("#conteudo-previa");
+        const blocos = [];
+
+        const nome = document.createElement("p");
+        const forte = document.createElement("strong");
+        forte.textContent = nomeDoJovem || "Seu nome";
+        nome.append(forte);
+        blocos.push(nome);
+
+        const secao = (titulo, itens, vazio) => {
+            const cabecalho = document.createElement("h3");
+            cabecalho.textContent = titulo;
+            blocos.push(cabecalho);
+
+            if (!itens.length) {
+                const nada = document.createElement("p");
+                nada.textContent = vazio;
+                blocos.push(nada);
+                return;
+            }
+
+            const lista = document.createElement("ul");
+            itens.forEach((texto) => {
+                const item = document.createElement("li");
+                item.textContent = texto;
+                lista.append(item);
+            });
+            blocos.push(lista);
+        };
+
+        secao("Objetivo", dados.objetivo.trim() ? [dados.objetivo.trim()] : [], "Não informado.");
+
+        secao(
+            "Escolaridade",
+            dados.escolaridades.map((e) =>
+                `${e.curso} (${e.nivel}), ${e.instituicao}, ${e.anoInicio}` +
+                (e.anoFim ? ` a ${e.anoFim}` : ", cursando")),
+            "Não informada."
+        );
+
+        secao(
+            "Experiências",
+            dados.experiencias.map((e) =>
+                `${e.cargo}, ${e.empresa}, ${nomeDoMes(e.inicio)}` +
+                (e.fim ? ` a ${nomeDoMes(e.fim)}` : " até hoje") +
+                (e.descricao.trim() ? `. ${e.descricao.trim()}` : "")),
+            "Ainda sem experiência. Buscando a primeira oportunidade."
+        );
+
+        conteudo.replaceChildren(...blocos);
+        previa.hidden = false;
+        previa.focus();
+    }
+
+    async function carregar() {
+        try {
+            const [resposta, sessao] = await Promise.all([
+                chamarComToken("/curriculo"),
+                chamarComToken("/sessao/eu"),
+            ]);
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (sessao.ok) nomeDoJovem = (await sessao.json()).nome || "";
+
+            if (resposta.ok) {
+                preencher(corpo);
+                return;
+            }
+
+            avisarRecusa(resposta, corpo, "Não foi possível abrir o currículo.");
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    painelDoCurriculo.querySelector("#adicionar-escolaridade").addEventListener("click", () => {
+        const item = adicionarItem(listaDeEscolaridades, "Escolaridade", CAMPOS_DA_ESCOLARIDADE);
+        item.querySelector("input").focus();
+    });
+
+    painelDoCurriculo.querySelector("#adicionar-experiencia").addEventListener("click", () => {
+        const item = adicionarItem(listaDeExperiencias, "Experiência", CAMPOS_DA_EXPERIENCIA);
+        item.querySelector("input").focus();
+    });
+
+    painelDoCurriculo.querySelector("#ver-previa").addEventListener("click", montarPrevia);
+
+    formulario.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        aviso.hidden = true;
+
+        const textoOriginal = botaoSalvar.textContent;
+        botaoSalvar.disabled = true;
+        botaoSalvar.textContent = "Salvando...";
+
+        try {
+            const resposta = await chamarComToken("/curriculo", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(lerFormulario()),
+            });
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                preencher(corpo);
+                mostrarAviso(aviso, "sucesso", "Currículo salvo.");
+                if (!previa.hidden) montarPrevia();
+                return;
+            }
+
+            avisarRecusa(resposta, corpo, "Não foi possível salvar o currículo:");
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        } finally {
+            botaoSalvar.disabled = false;
+            botaoSalvar.textContent = textoOriginal;
+        }
+    });
+
+    carregar();
 }
