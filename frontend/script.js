@@ -31,36 +31,16 @@ if (themeButton) {
 // VALIDAÇÃO DAS SENHAS
 // =========================
 
+// Cada formulário que confere senha limpa o aviso de "não coincidem" assim que
+// a pessoa volta a digitar. O envio em si fica com o dono de cada formulário,
+// mais abaixo: aqui não entra manipulador de envio, senão o mesmo formulário
+// teria dois donos brigando pelo mesmo clique.
 document.querySelectorAll(".auth-form").forEach((form) => {
-    const senha = form.querySelector("#senha");
     const confirmarSenha = form.querySelector("#confirmar-senha");
 
-    if (!senha || !confirmarSenha) {
+    if (!confirmarSenha) {
         return;
     }
-
-    // O cadastro de jovem tem envio próprio, lá embaixo, que já confere as
-    // senhas antes de chamar a API. Sem isso o formulário teria dois donos.
-    if (form.id === "form-cadastro-jovem") {
-        confirmarSenha.addEventListener("input", () => {
-            confirmarSenha.setCustomValidity("");
-        });
-        return;
-    }
-
-    form.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        if (senha.value !== confirmarSenha.value) {
-            confirmarSenha.setCustomValidity("As senhas não coincidem.");
-            confirmarSenha.reportValidity();
-            return;
-        }
-
-        confirmarSenha.setCustomValidity("");
-
-        alert("Senhas conferem! O cadastro ainda não está conectado ao servidor.");
-    });
 
     confirmarSenha.addEventListener("input", () => {
         confirmarSenha.setCustomValidity("");
@@ -273,6 +253,26 @@ async function mostrarQuemEstaLogado() {
         window.location.href = "index.html";
     });
 
+    // A empresa acompanha daqui o pedido de validação (US06).
+    if (usuario.perfil === "EMPRESA") {
+        const validacao = document.createElement("a");
+        validacao.href = "validacao-empresa.html";
+        validacao.className = "login-button";
+        validacao.textContent = "Validação";
+        acoes.append(saudacao, validacao, sair);
+        return;
+    }
+
+    // Só jovem tem perfil para preencher (US04).
+    if (usuario.perfil === "JOVEM") {
+        const meuPerfil = document.createElement("a");
+        meuPerfil.href = "perfil.html";
+        meuPerfil.className = "login-button";
+        meuPerfil.textContent = "Meu perfil";
+        acoes.append(saudacao, meuPerfil, sair);
+        return;
+    }
+
     acoes.append(saudacao, sair);
 }
 
@@ -325,4 +325,449 @@ if (formularioDeLogin) {
             botao.textContent = textoOriginal;
         }
     });
+}
+
+// =========================
+// CADASTRO DE EMPRESA: ENVIO PARA A API
+// =========================
+
+// Vai desenhando 00.000.000/0000-00 enquanto a pessoa digita. É só conforto:
+// quem vale é a conferência dos dígitos, que roda na API.
+function formatarCnpj(valor) {
+    const numeros = valor.replace(/\D/g, "").slice(0, 14);
+
+    return numeros
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1/$2")
+        .replace(/(\d{4})(\d)/, "$1-$2");
+}
+
+const formularioDeEmpresa = document.querySelector("#form-cadastro-empresa");
+
+if (formularioDeEmpresa) {
+    const aviso = formularioDeEmpresa.querySelector("#aviso");
+    const botao = formularioDeEmpresa.querySelector("button[type=submit]");
+    const campoCnpj = formularioDeEmpresa.querySelector("#cnpj");
+    const confirmarSenha = formularioDeEmpresa.querySelector("#confirmar-senha");
+
+    campoCnpj.addEventListener("input", () => {
+        campoCnpj.value = formatarCnpj(campoCnpj.value);
+    });
+
+    formularioDeEmpresa.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        aviso.hidden = true;
+
+        const senha = formularioDeEmpresa.querySelector("#senha");
+
+        if (senha.value !== confirmarSenha.value) {
+            confirmarSenha.setCustomValidity("As senhas não coincidem.");
+            confirmarSenha.reportValidity();
+            return;
+        }
+        confirmarSenha.setCustomValidity("");
+
+        const textoOriginal = botao.textContent;
+        botao.disabled = true;
+        botao.textContent = "Enviando...";
+
+        const texto = (id) => {
+            const campo = formularioDeEmpresa.querySelector(`#${id}`);
+            return campo ? campo.value.trim() : "";
+        };
+
+        try {
+            const resposta = await fetch(`${ENDERECO_DA_API}/empresas`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    razaoSocial: texto("nome-empresa"),
+                    cnpj: texto("cnpj"),
+                    nomeResponsavel: texto("responsavel"),
+                    email: texto("email"),
+                    telefone: texto("telefone"),
+                    senha: senha.value,
+                }),
+            });
+
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.status === 201) {
+                mostrarAviso(
+                    aviso,
+                    "sucesso",
+                    "Cadastro enviado. A conta fica pendente até a validação dos documentos. Redirecionando para a tela de entrada..."
+                );
+                formularioDeEmpresa.reset();
+                setTimeout(() => { window.location.href = "login.html"; }, 2600);
+                return;
+            }
+
+            const mensagens = (corpo.erros || []).map((e) => e.mensagem);
+            mostrarAviso(
+                aviso,
+                "erro",
+                mensagens.length ? "Não foi possível criar a conta:" : "Não foi possível criar a conta.",
+                mensagens
+            );
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        } finally {
+            botao.disabled = false;
+            botao.textContent = textoOriginal;
+        }
+    });
+}
+
+// =========================
+// VALIDAÇÃO DA EMPRESA (US06)
+// =========================
+
+const formularioDeValidacao = document.querySelector("#form-validacao");
+
+const SITUACOES_DA_VALIDACAO = {
+    SEM_ENVIO: {
+        classe: "pendente",
+        titulo: "Nenhum documento enviado ainda.",
+        texto: "Sua empresa só publica vagas depois de validada.",
+    },
+    EM_ANALISE: {
+        classe: "analise",
+        titulo: "Em análise.",
+        texto: "Recebemos os documentos. Você vê a resposta nesta tela.",
+    },
+    DOCUMENTOS_PENDENTES: {
+        classe: "pendente",
+        titulo: "A equipe pediu documentos adicionais.",
+        texto: "Envie abaixo o que foi pedido. Ele entra na mesma solicitação.",
+    },
+    VALIDADA: {
+        classe: "validada",
+        titulo: "Empresa validada.",
+        texto: "Você já pode publicar vagas.",
+    },
+    REJEITADA: {
+        classe: "rejeitada",
+        titulo: "Solicitação rejeitada.",
+        texto: "Para rever a decisão, entre em contato com a equipe do Conecta Jovem.",
+    },
+};
+
+function situacaoDaValidacao(dados) {
+    if (dados.solicitacao?.status === "DOCUMENTOS_PENDENTES") return "DOCUMENTOS_PENDENTES";
+    if (dados.statusEmpresa === "PENDENTE") return "SEM_ENVIO";
+    return dados.statusEmpresa;
+}
+
+function formatarData(texto) {
+    return new Date(texto).toLocaleDateString("pt-BR");
+}
+
+// Monta a caixa de situação com textContent, nunca innerHTML: o motivo vem do
+// administrador, e texto digitado por alguém não deve virar código na página.
+function mostrarSituacaoDaValidacao(dados) {
+    const caixa = document.querySelector("#situacao-validacao");
+    const situacao = SITUACOES_DA_VALIDACAO[situacaoDaValidacao(dados)];
+
+    caixa.className = `situacao-validacao situacao-validacao--${situacao.classe}`;
+    caixa.replaceChildren();
+
+    const titulo = document.createElement("strong");
+    titulo.textContent = situacao.titulo;
+    caixa.append(titulo);
+
+    if (situacao.texto) caixa.append(` ${situacao.texto}`);
+
+    if (dados.solicitacao?.motivo) {
+        const motivo = document.createElement("p");
+        motivo.textContent = `Mensagem da equipe: ${dados.solicitacao.motivo}`;
+        caixa.append(motivo);
+    }
+
+    if (dados.solicitacao?.documentos.length) {
+        const lista = document.createElement("ul");
+        dados.solicitacao.documentos.forEach((documento) => {
+            const item = document.createElement("li");
+            item.textContent = `${documento.nome}, enviado em ${formatarData(documento.enviadoEm)}`;
+            lista.append(item);
+        });
+        caixa.append(lista);
+    }
+
+    caixa.hidden = false;
+}
+
+// Um campo de arquivo para cada documento exigido. No reenvio nenhum é
+// obrigatório, porque a empresa manda só o que foi pedido.
+function montarCamposDeDocumentos(dados) {
+    const conjunto = document.querySelector("#documentos-exigidos");
+    const campos = document.querySelector("#campos-documentos");
+    const botao = formularioDeValidacao.querySelector("button[type=submit]");
+    const { exigencias, envio } = dados;
+
+    document.querySelector("#regras-arquivo").textContent =
+        `Formatos aceitos: ${exigencias.formatos}. Tamanho máximo: ${exigencias.tamanhoMaximoEmMb} MB por arquivo.`;
+
+    campos.replaceChildren();
+
+    exigencias.documentos.forEach((documento) => {
+        const rotulo = document.createElement("label");
+        rotulo.htmlFor = documento.campo;
+        rotulo.textContent = envio.reenvio ? documento.nome : `${documento.nome} (obrigatório)`;
+
+        const campo = document.createElement("input");
+        campo.type = "file";
+        campo.id = documento.campo;
+        campo.name = documento.campo;
+        campo.accept = ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png";
+        campo.required = !envio.reenvio;
+        campo.setAttribute("aria-describedby", `dica-${documento.campo} regras-arquivo`);
+
+        const dica = document.createElement("p");
+        dica.className = "dica";
+        dica.id = `dica-${documento.campo}`;
+        dica.textContent = documento.descricao;
+
+        campos.append(rotulo, campo, dica);
+    });
+
+    conjunto.hidden = !envio.pode;
+    botao.hidden = !envio.pode;
+    document.querySelector("#explicacao-validacao").hidden = !envio.pode;
+    botao.textContent = envio.reenvio ? "Reenviar documentos" : "Enviar documentos";
+}
+
+// Confere no navegador antes de mandar, para não esperar o envio de um arquivo
+// grande só para ouvir um "não". A API confere de novo, porque esta parte
+// qualquer pessoa contorna.
+function conferirArquivosNaTela(dados) {
+    const erros = [];
+    const limite = dados.exigencias.tamanhoMaximoEmMb * 1024 * 1024;
+    let algumArquivo = false;
+
+    dados.exigencias.documentos.forEach((documento) => {
+        const arquivo = document.querySelector(`#${documento.campo}`).files[0];
+
+        if (!arquivo) {
+            if (!dados.envio.reenvio) erros.push(`Anexe o ${documento.nome}.`);
+            return;
+        }
+
+        algumArquivo = true;
+
+        if (!/\.(pdf|jpe?g|png)$/i.test(arquivo.name)) {
+            erros.push(`${documento.nome}: envie em ${dados.exigencias.formatos}.`);
+        } else if (arquivo.size > limite) {
+            erros.push(`${documento.nome}: o arquivo passa de ${dados.exigencias.tamanhoMaximoEmMb} MB.`);
+        }
+    });
+
+    if (dados.envio.reenvio && !algumArquivo) {
+        erros.push("Anexe pelo menos um documento para reenviar.");
+    }
+
+    return erros;
+}
+
+if (formularioDeValidacao) {
+    const aviso = formularioDeValidacao.querySelector("#aviso");
+    const botao = formularioDeValidacao.querySelector("button[type=submit]");
+    let dadosAtuais = null;
+
+    if (!pegarToken()) {
+        window.location.href = "login.html";
+    }
+
+    function atualizarTela(dados) {
+        dadosAtuais = dados;
+        mostrarSituacaoDaValidacao(dados);
+        montarCamposDeDocumentos(dados);
+    }
+
+    function avisarRecusa(resposta, corpo, titulo) {
+        if (resposta.status === 401) {
+            esquecerToken();
+            window.location.href = "login.html";
+            return;
+        }
+
+        if (resposta.status === 403) {
+            mostrarAviso(aviso, "erro", "A validação é só para contas de empresa.");
+            return;
+        }
+
+        const mensagens = (corpo.erros || []).map((e) => e.mensagem);
+        mostrarAviso(aviso, "erro", titulo, mensagens);
+    }
+
+    async function carregarValidacao() {
+        try {
+            const resposta = await chamarComToken("/empresas/validacao");
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                atualizarTela(corpo);
+                return;
+            }
+
+            avisarRecusa(resposta, corpo, "Não foi possível abrir a validação.");
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    formularioDeValidacao.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        aviso.hidden = true;
+
+        const errosNaTela = conferirArquivosNaTela(dadosAtuais);
+        if (errosNaTela.length) {
+            mostrarAviso(aviso, "erro", "Confira os arquivos:", errosNaTela);
+            return;
+        }
+
+        const textoOriginal = botao.textContent;
+        botao.disabled = true;
+        botao.textContent = "Enviando...";
+
+        try {
+            // FormData monta o envio de arquivos. O Content-Type fica por conta
+            // do navegador, que inclui a separação entre os arquivos.
+            const resposta = await chamarComToken("/empresas/validacao", {
+                method: "POST",
+                body: new FormData(formularioDeValidacao),
+            });
+
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                atualizarTela(corpo);
+                mostrarAviso(aviso, "sucesso", "Documentos enviados. A solicitação está em análise.");
+                return;
+            }
+
+            botao.textContent = textoOriginal;
+            avisarRecusa(resposta, corpo, "Não foi possível enviar os documentos:");
+        } catch (erro) {
+            botao.textContent = textoOriginal;
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        } finally {
+            botao.disabled = false;
+        }
+    });
+
+    carregarValidacao();
+}
+
+// =========================
+// PERFIL DO JOVEM (US04)
+// =========================
+
+const formularioDePerfil = document.querySelector("#form-perfil");
+
+// Mostra se o perfil está completo ou o que falta (RN02).
+function mostrarSituacaoDoPerfil(situacao) {
+    const caixa = document.querySelector("#situacao-perfil");
+
+    if (situacao.completo) {
+        caixa.className = "situacao-perfil situacao-perfil--completo";
+        caixa.textContent = "Perfil completo.";
+    } else {
+        caixa.className = "situacao-perfil situacao-perfil--incompleto";
+        caixa.innerHTML =
+            "<strong>Perfil incompleto.</strong> Sem estes dados você ainda não consegue se candidatar: " +
+            situacao.faltando.join(", ") + ".";
+    }
+
+    caixa.hidden = false;
+}
+
+function preencherPerfil(formulario, perfil) {
+    ["telefone", "endereco", "habilidades"].forEach((campo) => {
+        formulario.querySelector(`#${campo}`).value = perfil[campo] || "";
+    });
+    mostrarSituacaoDoPerfil(perfil.situacao);
+}
+
+if (formularioDePerfil) {
+    const aviso = formularioDePerfil.querySelector("#aviso");
+    const botao = formularioDePerfil.querySelector("button[type=submit]");
+
+    // Sem login não há perfil para mostrar.
+    if (!pegarToken()) {
+        window.location.href = "login.html";
+    }
+
+    // Trata as respostas que não são de sucesso do mesmo jeito no carregar e no salvar.
+    function avisarRecusa(resposta, corpo, titulo) {
+        if (resposta.status === 401) {
+            esquecerToken();
+            window.location.href = "login.html";
+            return;
+        }
+
+        if (resposta.status === 403) {
+            botao.disabled = true;
+            mostrarAviso(aviso, "erro", "O perfil é só para contas de jovem.");
+            return;
+        }
+
+        const mensagens = (corpo.erros || []).map((e) => e.mensagem);
+        mostrarAviso(aviso, "erro", titulo, mensagens);
+    }
+
+    async function carregarPerfil() {
+        try {
+            const resposta = await chamarComToken("/perfil");
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                preencherPerfil(formularioDePerfil, corpo);
+                return;
+            }
+
+            avisarRecusa(resposta, corpo, "Não foi possível abrir o perfil.");
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    formularioDePerfil.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        aviso.hidden = true;
+
+        const textoOriginal = botao.textContent;
+        botao.disabled = true;
+        botao.textContent = "Salvando...";
+
+        try {
+            const resposta = await chamarComToken("/perfil", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    telefone: formularioDePerfil.querySelector("#telefone").value,
+                    endereco: formularioDePerfil.querySelector("#endereco").value,
+                    habilidades: formularioDePerfil.querySelector("#habilidades").value,
+                }),
+            });
+
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                preencherPerfil(formularioDePerfil, corpo);
+                mostrarAviso(aviso, "sucesso", "Perfil salvo.");
+                return;
+            }
+
+            avisarRecusa(resposta, corpo, "Não foi possível salvar o perfil:");
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        } finally {
+            botao.disabled = false;
+            botao.textContent = textoOriginal;
+        }
+    });
+
+    carregarPerfil();
 }

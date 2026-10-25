@@ -146,6 +146,11 @@ model Empresa {
   cnpj        String        @unique
   status      StatusEmpresa @default(PENDENTE) // RN01: só publica vaga depois de VALIDADA
 
+  // O formulário de cadastro já pede estes dois. Guardamos em vez de jogar
+  // fora; são o contato para o administrador falar com a empresa na validação.
+  nomeResponsavel String?
+  telefone        String?
+
   usuario      Usuario                @relation(fields: [usuarioId], references: [id])
   vagas        Vaga[]
   solicitacoes SolicitacaoValidacao[]
