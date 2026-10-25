@@ -1466,3 +1466,91 @@ select:focus-visible {
   font-size: 0.95rem;
   color: var(--text);
 }
+
+/* ==========================================================
+   VALIDAÇÃO DA EMPRESA (US06)
+   ========================================================== */
+
+/* Os botões têm display próprio, que venceria o atributo hidden. Sem isto, o
+   botão de enviar continuava na tela depois da solicitação ir para análise. */
+.auth-form [hidden] {
+  display: none;
+}
+
+.documentos-exigidos {
+  margin: 1rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.documentos-exigidos legend {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.documentos-exigidos label {
+  display: block;
+}
+
+.documentos-exigidos input[type="file"] {
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.55rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.documentos-exigidos input[type="file"]:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 1px;
+}
+
+/* Texto de apoio embaixo do campo, alinhado à esquerda como o campo. */
+.auth-form p.dica {
+  margin: 0.35rem 0 0;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+/* Situação do pedido. O texto diz a situação; a cor só reforça. */
+.situacao-validacao {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border-left: 4px solid currentColor;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.auth-form .situacao-validacao p {
+  margin: 0.4rem 0 0;
+  text-align: left;
+  color: inherit;
+}
+
+.situacao-validacao ul {
+  margin: 0.4rem 0 0 1.1rem;
+  padding: 0;
+}
+
+.situacao-validacao--pendente {
+  color: #93370d;
+  background: #fffaeb;
+}
+
+.situacao-validacao--analise {
+  color: #1849a9;
+  background: #eff8ff;
+}
+
+.situacao-validacao--validada {
+  color: #067647;
+  background: #ecfdf3;
+}
+
+.situacao-validacao--rejeitada {
+  color: #b42318;
+  background: #fef3f2;
+}
