@@ -222,6 +222,17 @@ a {
     color: var(--primary);
 }
 
+/* O "Sair" é um botão de verdade, e o navegador dá a ele fundo cinza claro.
+   No tema escuro o texto claro sumia nesse fundo (1,1:1). */
+button.login-button {
+    background: transparent;
+    border: 1px solid var(--border);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .register-button {
     background-color: var(--primary);
     color: var(--primary-contrast);
