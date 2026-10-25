@@ -1329,12 +1329,14 @@ select:focus-visible {
   line-height: 1.4;
 }
 
-.aviso--erro {
+/* .aviso.aviso--erro e não só .aviso--erro: dentro do cartão do formulário,
+   a regra ".auth-form p" pintava o aviso de cinza e o contraste caía para 4,4:1. */
+.aviso.aviso--erro {
   color: #b42318;
   background: #fef3f2;
 }
 
-.aviso--sucesso {
+.aviso.aviso--sucesso {
   color: #067647;
   background: #ecfdf3;
 }
