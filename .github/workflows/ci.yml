@@ -15,6 +15,11 @@ jobs:
     name: Backend
     runs-on: ubuntu-latest
 
+    # O npm ci dispara o prisma generate, que precisa desta variavel existir.
+    # A URL abaixo e so para os comandos rodarem, nao conecta em banco nenhum.
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
+
     steps:
       - name: Baixa o codigo
         uses: actions/checkout@v4
@@ -36,8 +41,6 @@ jobs:
       # A URL abaixo e so para o comando rodar, nao conecta em banco nenhum.
       - name: Confere o modelo de dados
         working-directory: backend
-        env:
-          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
         run: npx prisma validate
 
       # Garante que nenhum segredo de verdade foi commitado por engano.
