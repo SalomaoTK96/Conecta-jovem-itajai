@@ -5,7 +5,9 @@
 :root {
     --background: #ffffff;
     --text: #172033;
-    --muted: #64748b;
+    /* TS04: mais escuro que o #64748b de antes, que caía para 4,3:1 sobre
+       o fundo azulado das telas. Este dá mais de 6:1 em todos os fundos claros. */
+    --muted: #475569;
     --primary: #2563eb;
     --primary-hover: #1d4ed8;
     --primary-contrast: #ffffff;
