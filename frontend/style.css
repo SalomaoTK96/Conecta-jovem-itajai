@@ -827,9 +827,10 @@ select:focus-visible {
     gap: 40px;
 }
 
+/* Sem opacidade: o texto claro sobre o azul precisa do contraste cheio
+   para passar de 4,5:1 (TS04). */
 .final-cta .section-label {
     color: inherit;
-    opacity: 0.72;
 }
 
 .final-cta h2 {
@@ -837,7 +838,7 @@ select:focus-visible {
 }
 
 .final-cta p {
-    opacity: 0.8;
+    color: inherit;
 }
 
 .final-button {
