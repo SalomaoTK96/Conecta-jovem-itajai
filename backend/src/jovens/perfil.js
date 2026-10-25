@@ -1,11 +1,13 @@
 // Regras do perfil do jovem (US04). Funções puras, como em regras.js: dá para
 // testar sem banco e a regra fica escrita num lugar só.
 
+const { curriculoCompleto } = require("./curriculo");
+
 const TAMANHO_MAXIMO_DO_ENDERECO = 200;
 const TAMANHO_MAXIMO_DAS_HABILIDADES = 500;
 
 // Os campos que contam para o perfil completo (RN02), com o nome que a tela
-// mostra quando um deles está faltando. O currículo entra nesta conta na US05.
+// mostra quando um deles está faltando. O currículo (US05) também conta.
 const CAMPOS_DO_PERFIL = [
   { campo: "telefone", nome: "Telefone" },
   { campo: "endereco", nome: "Endereço" },
@@ -64,10 +66,12 @@ function conferirPerfil(dados) {
 
 // RN02: perfil incompleto impede a candidatura. A US10 vai usar esta mesma
 // função para decidir se deixa o jovem se candidatar.
-function situacaoDoPerfil(perfil) {
+function situacaoDoPerfil(perfil, curriculo) {
   const faltando = CAMPOS_DO_PERFIL
     .filter(({ campo }) => !limpar(perfil?.[campo]))
     .map(({ nome }) => nome);
+
+  if (!curriculoCompleto(curriculo)) faltando.push("Currículo");
 
   return { completo: faltando.length === 0, faltando };
 }

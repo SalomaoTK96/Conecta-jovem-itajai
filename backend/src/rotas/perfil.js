@@ -11,14 +11,14 @@ const rotas = express.Router();
 rotas.use(exigirLogin, exigirPerfil("JOVEM"));
 
 // Monta a resposta igual nas duas rotas, para a tela tratar de um jeito só.
-function resposta(perfil) {
+function resposta(perfil, curriculo) {
   const dados = {
     telefone: perfil?.telefone ?? null,
     endereco: perfil?.endereco ?? null,
     habilidades: perfil?.habilidades ?? null,
   };
 
-  return { ...dados, situacao: situacaoDoPerfil(dados) };
+  return { ...dados, situacao: situacaoDoPerfil(dados, curriculo) };
 }
 
 // Acha o jovem de quem está logado. Token válido de uma conta que sumiu do
@@ -26,7 +26,8 @@ function resposta(perfil) {
 function jovemDoUsuario(usuarioId) {
   return banco.jovem.findUnique({
     where: { usuarioId },
-    include: { perfil: true },
+    // O currículo vem junto porque também conta para o perfil completo (RN02).
+    include: { perfil: true, curriculo: { include: { escolaridades: true } } },
   });
 }
 
@@ -40,7 +41,7 @@ rotas.get("/", async (req, res) => {
     const jovem = await jovemDoUsuario(req.usuario.id);
     if (!jovem) return res.status(401).json(SESSAO_INVALIDA);
 
-    return res.json(resposta(jovem.perfil));
+    return res.json(resposta(jovem.perfil, jovem.curriculo));
   } catch (erro) {
     console.error("Falha ao consultar perfil:", erro);
     return res.status(500).json({
@@ -69,7 +70,7 @@ rotas.put("/", async (req, res) => {
       update: conferencia.perfil,
     });
 
-    return res.json(resposta(perfil));
+    return res.json(resposta(perfil, jovem.curriculo));
   } catch (erro) {
     console.error("Falha ao salvar perfil:", erro);
     return res.status(500).json({
