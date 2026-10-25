@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu currículo | Conecta Jovem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-container">
+
+            <a href="index.html" class="logo" aria-label="Conecta Jovem - Início">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <nav class="nav" aria-label="Navegação principal">
+                <a href="index.html#inicio" class="nav-link">Início</a>
+                <a href="index.html#vagas" class="nav-link">Vagas</a>
+                <a href="index.html#sobre" class="nav-link">Sobre</a>
+            </nav>
+
+            <div class="header-actions">
+
+                <button
+                    class="theme-button"
+                    type="button"
+                    aria-label="Alternar tema"
+                    title="Alternar tema">
+                    🌓
+                </button>
+
+                <a href="login.html" class="login-button">Entrar</a>
+                <a href="cadastro.html" class="register-button">Criar conta</a>
+
+            </div>
+        </div>
+    </header>
+
+    <main class="auth-section">
+        <section class="auth-form painel-curriculo" aria-labelledby="curriculo-titulo">
+            <h1 id="curriculo-titulo">Meu currículo</h1>
+
+            <p class="dica">
+                Não precisa ter currículo pronto: preencha as partes abaixo e o site monta
+                para você. Dá para salvar aos poucos e voltar depois.
+            </p>
+
+            <!-- RN02: diz se o currículo já conta para o perfil completo. -->
+            <div id="situacao-curriculo" class="situacao-perfil" role="status" hidden></div>
+
+            <form id="form-curriculo" novalidate>
+                <fieldset class="secao-curriculo">
+                    <legend>Objetivo profissional</legend>
+                    <p class="dica" id="dica-objetivo">
+                        Em uma ou duas frases, o que você procura. Exemplo: "Busco minha primeira
+                        oportunidade como jovem aprendiz na área administrativa."
+                    </p>
+                    <label for="objetivo">Objetivo</label>
+                    <textarea id="objetivo" name="objetivo" rows="3" maxlength="300"
+                              aria-describedby="dica-objetivo"></textarea>
+                </fieldset>
+
+                <fieldset class="secao-curriculo">
+                    <legend>Escolaridade</legend>
+                    <p class="dica">
+                        Coloque a escola onde estuda ou estudou e também cursos que fez, como
+                        informática ou idiomas. Se ainda está cursando, deixe o ano de conclusão vazio.
+                    </p>
+                    <div id="lista-escolaridades" class="itens-curriculo"></div>
+                    <button type="button" id="adicionar-escolaridade" class="secondary-button">
+                        Adicionar escolaridade
+                    </button>
+                </fieldset>
+
+                <fieldset class="secao-curriculo">
+                    <legend>Experiências</legend>
+                    <p class="dica">
+                        Vale trabalho voluntário, ajuda em negócio da família, bicos e estágios.
+                        Se ainda não teve nenhuma, tudo bem: deixe esta parte vazia.
+                    </p>
+                    <div id="lista-experiencias" class="itens-curriculo"></div>
+                    <button type="button" id="adicionar-experiencia" class="secondary-button">
+                        Adicionar experiência
+                    </button>
+                </fieldset>
+
+                <div class="botoes-curriculo">
+                    <button type="submit" class="register-button">Salvar currículo</button>
+                    <button type="button" id="ver-previa" class="secondary-button">Ver como a empresa vê</button>
+                </div>
+            </form>
+
+            <p id="aviso" class="aviso" role="alert" hidden></p>
+
+            <!-- Prévia: o currículo do jeito que a empresa vai ler. -->
+            <section id="previa-curriculo" class="previa-curriculo" aria-labelledby="previa-titulo" hidden tabindex="-1">
+                <h2 id="previa-titulo">Prévia do currículo</h2>
+                <div id="conteudo-previa"></div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+
+            <a href="index.html" class="logo footer-logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <p>Conectando jovens a oportunidades de estágio e aprendizagem.</p>
+
+            <span class="footer-copy">© 2026 Conecta Jovem</span>
+
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
