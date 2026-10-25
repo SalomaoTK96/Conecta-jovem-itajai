@@ -74,6 +74,40 @@ Para conferir o banco pelo navegador:
 npx prisma studio
 ```
 
+### HTTPS local (opcional)
+
+No dia a dia a API roda em HTTP. Para testar com HTTPS (TS02), gere um certificado de
+desenvolvimento dentro de `backend/certificados/` (a pasta não vai para o Git).
+
+Com o [mkcert](https://github.com/FiloSottile/mkcert), o navegador confia no certificado
+e não mostra aviso:
+
+```bash
+mkcert -install
+mkcert -cert-file certificados/localhost.pem -key-file certificados/localhost-key.pem localhost 127.0.0.1
+```
+
+Sem o mkcert, dá para usar o OpenSSL que vem com o Git Bash (o navegador vai avisar que o
+certificado não é confiável; é só seguir em frente):
+
+```bash
+MSYS_NO_PATHCONV=1 openssl req -x509 -newkey rsa:2048 -nodes -days 365 -keyout certificados/localhost-key.pem -out certificados/localhost.pem -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+```
+
+Depois preencha no `.env`:
+
+```
+HTTPS_CERT="certificados/localhost.pem"
+HTTPS_KEY="certificados/localhost-key.pem"
+```
+
+A API passa a responder em `https://localhost:3000`, aceita só TLS 1.2 ou superior, e
+`http://localhost:3080` redireciona para o HTTPS.
+
+Na hospedagem o certificado fica na plataforma: basta `FORCAR_HTTPS=true`, que a API
+redireciona os GET feitos por HTTP, recusa as demais requisições em HTTP e envia o
+cabeçalho HSTS.
+
 ## Estrutura de pastas
 
 ```

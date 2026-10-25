@@ -6,3 +6,6 @@ node_modules
 
 # Documentos enviados pelas empresas (US06). São dados de terceiros: nunca no Git.
 uploads/
+
+# Certificado de desenvolvimento (a chave privada nunca vai para o repositório)
+certificados/
