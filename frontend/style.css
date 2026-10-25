@@ -1156,10 +1156,20 @@ select:focus-visible {
 
     .header-actions {
         gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
+    /* Antes os links do cabeçalho sumiam no celular, inclusive o "Sair".
+       Agora ficam menores e quebram linha quando não cabem. */
     .login-button {
-        display: none;
+        min-height: 38px;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    button.login-button {
+        font-size: 12px;
     }
 
     .theme-button {
