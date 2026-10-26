@@ -1880,3 +1880,153 @@ select:focus-visible {
 .painel-vagas .botao-rejeitar {
   border: 1px solid #b42318;
 }
+
+/* =========================
+   MEU CURRÍCULO (US05)
+   ========================= */
+
+.auth-form.painel-curriculo {
+  max-width: 760px;
+  gap: 0.75rem;
+}
+
+#form-curriculo {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.secao-curriculo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.secao-curriculo legend {
+  padding: 0 0.4rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.painel-curriculo .dica {
+  text-align: left;
+}
+
+.itens-curriculo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Cada escolaridade ou experiência fica numa caixa própria, com o número dela. */
+.item-curriculo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+.item-curriculo legend {
+  font-weight: 600;
+}
+
+.item-curriculo .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.item-curriculo .campo--largo {
+  grid-column: 1 / -1;
+}
+
+.painel-curriculo select {
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+}
+
+.painel-curriculo select:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.painel-curriculo .secondary-button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.painel-curriculo .secondary-button:hover {
+  border-color: var(--primary);
+}
+
+.painel-curriculo .secao-curriculo > .secondary-button {
+  align-self: flex-start;
+  width: auto;
+}
+
+.painel-curriculo .item-curriculo .botao-rejeitar {
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: auto;
+  margin-top: 0.25rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid #b42318;
+}
+
+.botoes-curriculo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.painel-curriculo .botoes-curriculo button {
+  flex: 1 1 200px;
+  width: auto;
+  margin-top: 0;
+}
+
+.previa-curriculo {
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.previa-curriculo h2 {
+  margin-top: 0;
+  font-size: 1.15rem;
+}
+
+.previa-curriculo h3 {
+  margin: 1rem 0 0.25rem;
+  font-size: 1rem;
+}
+
+.painel-curriculo .previa-curriculo p {
+  margin: 0.2rem 0;
+  text-align: left;
+  color: var(--text);
+}
+
+.previa-curriculo ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+@media (max-width: 480px) {
+  .item-curriculo {
+    grid-template-columns: 1fr;
+  }
+}

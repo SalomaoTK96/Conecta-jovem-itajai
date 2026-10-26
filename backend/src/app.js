@@ -38,6 +38,7 @@ app.use("/empresas/vagas", require("./rotas/vagas-da-empresa"));
 app.use("/empresas", require("./rotas/empresas"));
 app.use("/sessao", require("./rotas/sessao"));
 app.use("/perfil", require("./rotas/perfil"));
+app.use("/curriculo", require("./rotas/curriculo"));
 app.use("/admin/validacoes", require("./rotas/admin-validacoes"));
 
 // O mesmo servidor entrega as telas. Em desenvolvimento isso evita precisar de
