@@ -5,7 +5,9 @@
 :root {
     --background: #ffffff;
     --text: #172033;
-    --muted: #64748b;
+    /* TS04: mais escuro que o #64748b de antes, que caía para 4,3:1 sobre
+       o fundo azulado das telas. Este dá mais de 6:1 em todos os fundos claros. */
+    --muted: #475569;
     --primary: #2563eb;
     --primary-hover: #1d4ed8;
     --primary-contrast: #ffffff;
@@ -220,6 +222,17 @@ a {
 
 .login-button:hover {
     color: var(--primary);
+}
+
+/* O "Sair" é um botão de verdade, e o navegador dá a ele fundo cinza claro.
+   No tema escuro o texto claro sumia nesse fundo (1,1:1). */
+button.login-button {
+    background: transparent;
+    border: 1px solid var(--border);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 .register-button {
@@ -827,9 +840,10 @@ select:focus-visible {
     gap: 40px;
 }
 
+/* Sem opacidade: o texto claro sobre o azul precisa do contraste cheio
+   para passar de 4,5:1 (TS04). */
 .final-cta .section-label {
     color: inherit;
-    opacity: 0.72;
 }
 
 .final-cta h2 {
@@ -837,7 +851,7 @@ select:focus-visible {
 }
 
 .final-cta p {
-    opacity: 0.8;
+    color: inherit;
 }
 
 .final-button {
@@ -1144,10 +1158,20 @@ select:focus-visible {
 
     .header-actions {
         gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
+    /* Antes os links do cabeçalho sumiam no celular, inclusive o "Sair".
+       Agora ficam menores e quebram linha quando não cabem. */
     .login-button {
-        display: none;
+        min-height: 38px;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    button.login-button {
+        font-size: 12px;
     }
 
     .theme-button {
@@ -1307,12 +1331,14 @@ select:focus-visible {
   line-height: 1.4;
 }
 
-.aviso--erro {
+/* .aviso.aviso--erro e não só .aviso--erro: dentro do cartão do formulário,
+   a regra ".auth-form p" pintava o aviso de cinza e o contraste caía para 4,4:1. */
+.aviso.aviso--erro {
   color: #b42318;
   background: #fef3f2;
 }
 
-.aviso--sucesso {
+.aviso.aviso--sucesso {
   color: #067647;
   background: #ecfdf3;
 }
