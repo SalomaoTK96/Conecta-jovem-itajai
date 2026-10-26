@@ -37,6 +37,7 @@ app.use("/empresas/validacao", require("./rotas/validacao"));
 app.use("/empresas", require("./rotas/empresas"));
 app.use("/sessao", require("./rotas/sessao"));
 app.use("/perfil", require("./rotas/perfil"));
+app.use("/admin/validacoes", require("./rotas/admin-validacoes"));
 
 // O mesmo servidor entrega as telas. Em desenvolvimento isso evita precisar de
 // dois programas no ar, e a tela passa a falar com a API no mesmo endereço.

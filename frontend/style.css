@@ -1603,3 +1603,158 @@ select:focus-visible {
   color: #93370d;
   background: #fffaeb;
 }
+
+/* =========================
+   VALIDAÇÃO DE EMPRESAS PELO ADMIN (US07)
+   ========================= */
+
+/* A análise precisa de mais espaço que um formulário de cadastro. */
+.auth-form.painel-admin {
+  max-width: 760px;
+  gap: 0.75rem;
+}
+
+.painel-admin h2 {
+  margin-top: 1rem;
+  font-size: 1.15rem;
+}
+
+.painel-admin h3 {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+}
+
+.fila-validacoes,
+.documentos-empresa {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Cada pedido da fila é um botão inteiro, fácil de acertar no celular. */
+.fila-validacoes button {
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.fila-validacoes button:hover,
+.fila-validacoes button[aria-current="true"] {
+  border-color: var(--primary);
+}
+
+.fila-validacoes button:focus-visible,
+.documentos-empresa button:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.analise {
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+.dados-empresa {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+.dados-empresa dt {
+  font-weight: 600;
+}
+
+.dados-empresa dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.documentos-empresa li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+#form-decisao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Sem isto o display: flex acima venceria o atributo hidden e os botões
+   continuariam na tela depois da decisão. */
+#form-decisao[hidden] {
+  display: none;
+}
+
+.botoes-decisao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Rejeitar tem cor própria e o texto diz o que faz: a cor não é a única pista. */
+.botao-rejeitar {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid #b42318;
+  border-radius: 8px;
+  background: transparent;
+  color: #b42318;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* As regras de .auth-form deixam todo botão em bloco e sem borda. No painel
+   os botões ficam lado a lado e o de rejeitar mantém a borda vermelha. */
+.painel-admin .botoes-decisao button {
+  flex: 1 1 140px;
+  width: auto;
+  margin-top: 0.5rem;
+}
+
+.painel-admin .documentos-empresa button {
+  flex: none;
+  width: auto;
+  margin-top: 0;
+  padding: 0.4rem 1rem;
+}
+
+.painel-admin .botao-rejeitar {
+  border: 1px solid #b42318;
+}
+
+.painel-admin .secondary-button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.painel-admin .secondary-button:hover {
+  border-color: var(--primary);
+}
+
+[data-theme="dark"] .botao-rejeitar {
+  border-color: #f97066;
+  color: #f97066;
+}
+
+@media (max-width: 480px) {
+  .dados-empresa {
+    grid-template-columns: 1fr;
+  }
+
+  .dados-empresa dt {
+    margin-top: 0.5rem;
+  }
+}

@@ -7,6 +7,7 @@
     "postinstall": "prisma generate",
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
+    "criar-admin": "node src/scripts/criar-admin.js",
     "test": "echo \"Sem testes automatizados ainda. Os roteiros manuais ficam em docs/testes/.\" && exit 0"
   },
   "keywords": [],
