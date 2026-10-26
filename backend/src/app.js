@@ -34,6 +34,7 @@ app.get("/saude", (req, res) => {
 // As rotas de cada item do backlog entram aqui embaixo, uma linha por assunto.
 app.use("/jovens", require("./rotas/jovens"));
 app.use("/empresas/validacao", require("./rotas/validacao"));
+app.use("/empresas/vagas", require("./rotas/vagas-da-empresa"));
 app.use("/empresas", require("./rotas/empresas"));
 app.use("/sessao", require("./rotas/sessao"));
 app.use("/perfil", require("./rotas/perfil"));

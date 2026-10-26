@@ -1758,3 +1758,125 @@ select:focus-visible {
     margin-top: 0.5rem;
   }
 }
+
+/* =========================
+   MINHAS VAGAS (US08)
+   ========================= */
+
+.auth-form.painel-vagas {
+  max-width: 760px;
+  gap: 0.75rem;
+}
+
+.painel-vagas h2 {
+  margin-top: 1rem;
+  font-size: 1.15rem;
+}
+
+.painel-vagas select {
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+}
+
+.painel-vagas select:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 1px;
+}
+
+#form-vaga {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+/* Sem isto o display: flex venceria o atributo hidden. */
+#form-vaga[hidden] {
+  display: none;
+}
+
+.botoes-vaga,
+.acoes-vaga {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.painel-vagas .botoes-vaga button {
+  flex: 1 1 160px;
+  width: auto;
+}
+
+.lista-vagas {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cartao-vaga {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.cartao-vaga h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.painel-vagas .cartao-vaga p {
+  margin: 0.2rem 0;
+  text-align: left;
+}
+
+/* O texto do selo já diz a situação; a cor só reforça. */
+.selo-vaga {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid currentColor;
+}
+
+.selo-vaga--aberta {
+  color: #067647;
+}
+
+.selo-vaga--encerrada {
+  color: var(--muted);
+}
+
+[data-theme="dark"] .selo-vaga--aberta {
+  color: #47cd89;
+}
+
+.painel-vagas .acoes-vaga button {
+  width: auto;
+  margin-top: 0.5rem;
+  padding: 0.4rem 1rem;
+}
+
+.painel-vagas .secondary-button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.painel-vagas .secondary-button:hover {
+  border-color: var(--primary);
+}
+
+.painel-vagas .botao-rejeitar {
+  border: 1px solid #b42318;
+}

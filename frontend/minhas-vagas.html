@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas vagas | Conecta Jovem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-container">
+
+            <a href="index.html" class="logo" aria-label="Conecta Jovem - Início">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <nav class="nav" aria-label="Navegação principal">
+                <a href="index.html#inicio" class="nav-link">Início</a>
+                <a href="index.html#vagas" class="nav-link">Vagas</a>
+                <a href="index.html#sobre" class="nav-link">Sobre</a>
+            </nav>
+
+            <div class="header-actions">
+
+                <button
+                    class="theme-button"
+                    type="button"
+                    aria-label="Alternar tema"
+                    title="Alternar tema">
+                    🌓
+                </button>
+
+                <a href="login.html" class="login-button">Entrar</a>
+                <a href="cadastro.html" class="register-button">Criar conta</a>
+
+            </div>
+        </div>
+    </header>
+
+    <main class="auth-section">
+        <section class="auth-form painel-vagas" aria-labelledby="vagas-titulo">
+            <h1 id="vagas-titulo">Minhas vagas</h1>
+
+            <!-- RN01: aparece quando a empresa ainda não pode publicar. -->
+            <div id="aviso-validacao" class="situacao-validacao situacao-validacao--pendente" role="status" hidden>
+                <strong>Sua empresa ainda não foi validada.</strong>
+                Para publicar vagas, envie os documentos na
+                <a href="validacao-empresa.html">tela de validação</a> e aguarde a análise.
+            </div>
+
+            <form id="form-vaga" aria-labelledby="form-vaga-titulo" novalidate hidden>
+                <h2 id="form-vaga-titulo">Nova vaga</h2>
+
+                <label for="titulo">Título</label>
+                <input type="text" id="titulo" name="titulo" maxlength="100" required
+                       placeholder="Ex.: Jovem aprendiz administrativo">
+
+                <label for="tipo">Tipo</label>
+                <select id="tipo" name="tipo" required>
+                    <option value="APRENDIZAGEM">Aprendizagem (Jovem Aprendiz)</option>
+                    <option value="ESTAGIO">Estágio</option>
+                </select>
+
+                <!-- As opções vêm da API, para a tela e o filtro do mural usarem a mesma lista. -->
+                <label for="area">Área</label>
+                <select id="area" name="area" required></select>
+
+                <label for="cidade">Cidade</label>
+                <input type="text" id="cidade" name="cidade" maxlength="60" required value="Itajaí">
+
+                <label for="descricao">Descrição</label>
+                <textarea id="descricao" name="descricao" rows="4" maxlength="2000" required
+                          aria-describedby="dica-descricao"></textarea>
+                <p id="dica-descricao" class="dica">
+                    O que o jovem vai fazer no dia a dia, horário e onde fica. Pelo menos 20 caracteres.
+                </p>
+
+                <label for="requisitos">Requisitos (opcional)</label>
+                <textarea id="requisitos" name="requisitos" rows="3" maxlength="1000"
+                          placeholder="Ex.: estar cursando o ensino médio"></textarea>
+
+                <label for="expiraEm">Recebe candidaturas até</label>
+                <input type="date" id="expiraEm" name="expiraEm" required aria-describedby="dica-prazo">
+                <p id="dica-prazo" class="dica">
+                    Depois deste dia a vaga é encerrada sozinha e sai do mural.
+                </p>
+
+                <div class="botoes-vaga">
+                    <button type="submit" class="register-button">Publicar vaga</button>
+                    <button type="button" id="cancelar-edicao" class="secondary-button" hidden>Cancelar edição</button>
+                </div>
+            </form>
+
+            <h2 id="lista-titulo">Vagas publicadas</h2>
+            <ul id="lista-vagas" class="lista-vagas" aria-labelledby="lista-titulo"></ul>
+            <p id="sem-vagas" class="dica" hidden>Você ainda não publicou nenhuma vaga.</p>
+
+            <p id="aviso" class="aviso" role="alert" hidden></p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+
+            <a href="index.html" class="logo footer-logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <p>Conectando jovens a oportunidades de estágio e aprendizagem.</p>
+
+            <span class="footer-copy">© 2026 Conecta Jovem</span>
+
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

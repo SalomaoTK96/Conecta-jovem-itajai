@@ -4,6 +4,7 @@ const fs = require("fs");
 const http = require("http");
 const https = require("https");
 const app = require("./app");
+const { agendarEncerramento } = require("./vagas/encerrar-vencidas");
 
 const porta = process.env.PORT || 3000;
 
@@ -40,3 +41,6 @@ if (!process.env.HTTPS_CERT || !process.env.HTTPS_KEY) {
       console.log(`http://localhost:${portaHttp} redireciona para o HTTPS`);
     });
 }
+
+// RN06: encerra as vagas vencidas agora e depois de hora em hora.
+agendarEncerramento();
