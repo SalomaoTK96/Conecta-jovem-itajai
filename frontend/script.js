@@ -223,6 +223,32 @@ function chamarComToken(caminho, opcoes = {}) {
 
 // Troca os botões "Entrar" e "Criar conta" pelo nome de quem entrou e um
 // botão de sair. Roda em todas as páginas que tiverem cabeçalho.
+// Sino do cabeçalho com o número de notificações não lidas (US13).
+function sinoDeNotificacoes() {
+    const sino = document.createElement("a");
+    sino.href = "notificacoes.html";
+    sino.className = "login-button sino";
+    sino.setAttribute("aria-label", "Notificações");
+    sino.textContent = "🔔";
+
+    const contador = document.createElement("span");
+    contador.className = "contador-notificacoes";
+    contador.hidden = true;
+    sino.append(contador);
+
+    chamarComToken("/notificacoes/nao-lidas")
+        .then((resposta) => (resposta.ok ? resposta.json() : null))
+        .then((dados) => {
+            if (!dados || !dados.total) return;
+            contador.textContent = dados.total > 99 ? "99+" : String(dados.total);
+            contador.hidden = false;
+            sino.setAttribute("aria-label", `Notificações: ${dados.total} não lida(s)`);
+        })
+        .catch(() => {});
+
+    return sino;
+}
+
 async function mostrarQuemEstaLogado() {
     const acoes = document.querySelector(".header-actions");
     if (!acoes || !pegarToken()) return;
@@ -263,7 +289,7 @@ async function mostrarQuemEstaLogado() {
         vagas.href = "minhas-vagas.html";
         vagas.className = "login-button";
         vagas.textContent = "Minhas vagas";
-        acoes.append(saudacao, vagas, validacao, sair);
+        acoes.append(saudacao, vagas, validacao, sinoDeNotificacoes(), sair);
         return;
     }
 
@@ -292,7 +318,7 @@ async function mostrarQuemEstaLogado() {
         candidaturas.href = "minhas-candidaturas.html";
         candidaturas.className = "login-button";
         candidaturas.textContent = "Minhas candidaturas";
-        acoes.append(saudacao, meuPerfil, meuCurriculo, candidaturas, sair);
+        acoes.append(saudacao, meuPerfil, meuCurriculo, candidaturas, sinoDeNotificacoes(), sair);
         return;
     }
 
@@ -2089,6 +2115,7 @@ if (painelDeMinhasCandidaturas) {
 
     function cartaoDaCandidatura(c) {
         const item = elemento("li", null, "cartao-vaga cartao-candidato");
+        item.id = `candidatura-${c.id}`;
 
         const titulo = elemento("h2");
         const link = elemento("a", c.vaga.titulo);
@@ -2132,10 +2159,81 @@ if (painelDeMinhasCandidaturas) {
 
             lista.replaceChildren(...corpo.candidaturas.map(cartaoDaCandidatura));
             semCandidaturas.hidden = corpo.candidaturas.length > 0;
+
+            // Veio de uma notificação (#candidatura-3): abre o histórico dela.
+            const alvo = window.location.hash && lista.querySelector(window.location.hash);
+            if (alvo) {
+                alvo.querySelector("details").open = true;
+                alvo.scrollIntoView({ block: "start" });
+            }
         } catch (erro) {
             mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
         }
     }
 
     carregarMinhasCandidaturas();
+}
+
+// =========================
+// NOTIFICAÇÕES (US13)
+// =========================
+
+const painelDeNotificacoes = document.querySelector(".painel-notificacoes");
+
+if (painelDeNotificacoes) {
+    const aviso = painelDeNotificacoes.querySelector("#aviso");
+    const lista = painelDeNotificacoes.querySelector("#lista-notificacoes");
+    const semNotificacoes = painelDeNotificacoes.querySelector("#sem-notificacoes");
+
+    if (!pegarToken()) {
+        window.location.href = "login.html?voltar=notificacoes.html";
+    }
+
+    // Abrir marca como lida e depois leva para a candidatura (ou validação).
+    async function abrirNotificacao(n, item) {
+        if (!n.lida) {
+            await chamarComToken(`/notificacoes/${n.id}/lida`, { method: "POST" }).catch(() => null);
+            n.lida = true;
+            item.classList.remove("notificacao--nova");
+        }
+        if (n.link) window.location.href = n.link;
+    }
+
+    function itemDaNotificacao(n) {
+        const item = elemento("li", null, `cartao-vaga notificacao${n.lida ? "" : " notificacao--nova"}`);
+
+        const botao = elemento("button", null, "abrir-notificacao");
+        botao.type = "button";
+        if (!n.lida) botao.append(elemento("span", "Nova", "selo-nova"));
+        botao.append(elemento("span", n.mensagem, "texto-notificacao"));
+
+        const detalhes = [n.vaga, formatarDataEHora(n.criadaEm)].filter(Boolean).join(" · ");
+        botao.append(elemento("span", detalhes, "dica"));
+
+        botao.addEventListener("click", () => abrirNotificacao(n, item));
+        item.append(botao);
+        return item;
+    }
+
+    async function carregarNotificacoes() {
+        try {
+            const resposta = await chamarComToken("/notificacoes");
+            if (resposta.status === 401) {
+                esquecerToken();
+                window.location.href = "login.html?voltar=notificacoes.html";
+                return;
+            }
+            const corpo = await resposta.json().catch(() => ({}));
+            if (!resposta.ok) {
+                mostrarAviso(aviso, "erro", "Não foi possível carregar as notificações.");
+                return;
+            }
+            lista.replaceChildren(...corpo.notificacoes.map(itemDaNotificacao));
+            semNotificacoes.hidden = corpo.notificacoes.length > 0;
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    carregarNotificacoes();
 }
