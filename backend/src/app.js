@@ -35,6 +35,7 @@ app.get("/saude", (req, res) => {
 app.use("/jovens", require("./rotas/jovens"));
 app.use("/empresas/validacao", require("./rotas/validacao"));
 app.use("/empresas/vagas", require("./rotas/vagas-da-empresa"));
+app.use("/empresas/candidaturas", require("./rotas/candidaturas-da-empresa"));
 app.use("/empresas", require("./rotas/empresas"));
 app.use("/sessao", require("./rotas/sessao"));
 app.use("/perfil", require("./rotas/perfil"));
