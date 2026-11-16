@@ -12,3 +12,7 @@ certificados/
 
 # Relatórios de cobertura gerados pelo npm run test:cobertura
 lcov.info
+
+# Saídas dos testes E2E (vídeos, prints e relatório)
+test/e2e/resultados/
+test/e2e/relatorio/
