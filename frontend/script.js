@@ -1222,7 +1222,13 @@ if (painelDeVagas) {
             botaoComConfirmacao("Remover", "Confirmar remoção", () => removerVaga(vaga))
         );
 
-        item.append(titulo, selo, resumo, prazo, acoes);
+        // US11: dali a empresa abre os candidatos desta vaga.
+        const candidatos = document.createElement("a");
+        candidatos.href = `candidatos.html?vaga=${vaga.id}`;
+        candidatos.className = "link-candidatos";
+        candidatos.textContent = `Ver candidatos (${vaga.candidaturas})`;
+
+        item.append(titulo, selo, resumo, prazo, candidatos, acoes);
         return item;
     }
 
@@ -1862,4 +1868,179 @@ if (painelDaVaga) {
     });
 
     carregarVaga();
+}
+
+// =========================
+// CANDIDATOS DA VAGA (US11)
+// =========================
+
+const NOMES_DOS_STATUS = {
+    EM_ANALISE: "Em análise",
+    EM_SELECAO: "Em seleção",
+    APROVADA: "Aprovada",
+    RECUSADA: "Recusada",
+};
+
+// Mês e ano de uma data da API: "03/2025".
+function mesEAno(texto) {
+    if (!texto) return "atual";
+    const data = new Date(texto);
+    return `${String(data.getUTCMonth() + 1).padStart(2, "0")}/${data.getUTCFullYear()}`;
+}
+
+// Cria um elemento com texto. textContent: nada vindo da API vira HTML.
+function elemento(tag, texto, classe) {
+    const el = document.createElement(tag);
+    if (texto !== undefined && texto !== null) el.textContent = texto;
+    if (classe) el.className = classe;
+    return el;
+}
+
+const painelDeCandidatos = document.querySelector(".painel-candidatos");
+
+if (painelDeCandidatos) {
+    const aviso = painelDeCandidatos.querySelector("#aviso");
+    const lista = painelDeCandidatos.querySelector("#lista-candidatos");
+    const resumo = painelDeCandidatos.querySelector("#resumo-candidatos");
+    const filtro = painelDeCandidatos.querySelector("#filtro-status");
+    const vagaId = new URLSearchParams(window.location.search).get("vaga");
+
+    if (!pegarToken()) {
+        window.location.href = `login.html?voltar=${encodeURIComponent(`candidatos.html?vaga=${vagaId}`)}`;
+    }
+
+    filtro.append(...Object.entries(NOMES_DOS_STATUS).map(([valor, nome]) => new Option(nome, valor)));
+
+    function curriculoDoCandidato(c) {
+        const bloco = document.createElement("details");
+        bloco.className = "curriculo-candidato";
+        bloco.append(elemento("summary", "Ver currículo"));
+
+        const contato = elemento("p", `E-mail: ${c.jovem.email || "-"} · Telefone: ${c.jovem.telefone || "-"}`);
+        bloco.append(contato);
+
+        if (c.jovem.habilidades) bloco.append(elemento("p", `Habilidades: ${c.jovem.habilidades}`));
+        if (c.curriculo.objetivo) bloco.append(elemento("p", `Objetivo: ${c.curriculo.objetivo}`));
+
+        bloco.append(elemento("h4", "Escolaridade"));
+        const escolas = elemento("ul");
+        c.curriculo.escolaridades.forEach((e) => {
+            const fim = e.anoFim ? e.anoFim : "cursando";
+            escolas.append(elemento("li", `${e.nivel} · ${e.curso} · ${e.instituicao} (${e.anoInicio} a ${fim})`));
+        });
+        bloco.append(escolas);
+
+        bloco.append(elemento("h4", "Experiência"));
+        if (!c.curriculo.experiencias.length) {
+            bloco.append(elemento("p", "Sem experiência registrada."));
+        } else {
+            const experiencias = elemento("ul");
+            c.curriculo.experiencias.forEach((e) => {
+                const texto = `${e.cargo} · ${e.empresa} (${mesEAno(e.inicio)} a ${mesEAno(e.fim)})`;
+                experiencias.append(elemento("li", e.descricao ? `${texto}: ${e.descricao}` : texto));
+            });
+            bloco.append(experiencias);
+        }
+
+        return bloco;
+    }
+
+    function cartaoDoCandidato(c) {
+        const item = elemento("li", null, "cartao-vaga cartao-candidato");
+        item.append(elemento("h2", c.jovem.nome));
+
+        const selo = elemento("span", NOMES_DOS_STATUS[c.status], `selo-status selo-status--${c.status.toLowerCase()}`);
+        const data = elemento("p", `Candidatura em ${formatarData(c.criadaEm)}`, "dica");
+
+        // Troca de status direto na lista (critério da US11).
+        const formulario = document.createElement("form");
+        formulario.className = "mudar-status";
+        const idDoCampo = `status-${c.id}`;
+        const rotulo = elemento("label", "Mudar status para");
+        rotulo.htmlFor = idDoCampo;
+        const campo = document.createElement("select");
+        campo.id = idDoCampo;
+        campo.append(
+            ...Object.entries(NOMES_DOS_STATUS)
+                .filter(([valor]) => valor !== c.status)
+                .map(([valor, nome]) => new Option(nome, valor))
+        );
+        const salvar = elemento("button", "Salvar status", "register-button");
+        salvar.type = "submit";
+        formulario.append(rotulo, campo, salvar);
+
+        formulario.addEventListener("submit", async (evento) => {
+            evento.preventDefault();
+            salvar.disabled = true;
+            await mudarStatus(c, campo.value);
+            salvar.disabled = false;
+        });
+
+        item.append(selo, data, curriculoDoCandidato(c), formulario);
+        return item;
+    }
+
+    async function mudarStatus(c, novo) {
+        aviso.hidden = true;
+        try {
+            const resposta = await chamarComToken(`/empresas/candidaturas/${c.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: novo }),
+            });
+            const corpo = await resposta.json().catch(() => ({}));
+            if (!resposta.ok) {
+                aviso.className = "aviso aviso--erro";
+                aviso.replaceChildren(elemento("strong", corpo.erros?.[0]?.mensagem || "Não foi possível mudar o status."));
+                aviso.hidden = false;
+                return;
+            }
+            aviso.className = "aviso aviso--sucesso";
+            aviso.replaceChildren(
+                elemento("strong", `${c.jovem.nome}: status mudou para ${NOMES_DOS_STATUS[novo]}. O jovem foi notificado.`)
+            );
+            aviso.hidden = false;
+            carregarCandidatos();
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    async function carregarCandidatos() {
+        const status = filtro.value;
+        const busca = new URLSearchParams({ vagaId: vagaId || "" });
+        if (status) busca.set("status", status);
+
+        try {
+            const resposta = await chamarComToken(`/empresas/candidaturas?${busca}`);
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.status === 401) {
+                esquecerToken();
+                window.location.href = "login.html";
+                return;
+            }
+            if (!resposta.ok) {
+                const mensagem = resposta.status === 403
+                    ? "Esta tela é só para contas de empresa."
+                    : corpo.erros?.[0]?.mensagem || "Não foi possível carregar os candidatos.";
+                mostrarAviso(aviso, "erro", mensagem);
+                return;
+            }
+
+            painelDeCandidatos.querySelector("#vaga-dos-candidatos").textContent = `Vaga: ${corpo.vaga.titulo}`;
+            lista.replaceChildren(...corpo.candidaturas.map(cartaoDoCandidato));
+
+            const total = corpo.candidaturas.length;
+            const nomeDoFiltro = status ? ` com status "${NOMES_DOS_STATUS[status]}"` : "";
+            resumo.textContent = total
+                ? `${total} candidato(s)${nomeDoFiltro}.`
+                : `Nenhum candidato${nomeDoFiltro} nesta vaga.`;
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    filtro.addEventListener("change", carregarCandidatos);
+    carregarCandidatos();
 }
