@@ -52,7 +52,7 @@ rotas.get("/nao-lidas", async (req, res) => {
 // POST /notificacoes/:id/lida -> marca como lida. O destinatário entra no
 // filtro: notificação de outro usuario não muda e responde 404.
 rotas.post("/:id/lida", async (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
+  const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return res.status(404).json(erro("Notificação não encontrada."));
 
   try {

@@ -56,7 +56,8 @@ rotas.get("/", async (req, res) => {
 // GET /vagas/:id -> detalhes de uma vaga do mural. Vaga encerrada, removida ou
 // de empresa não validada responde 404, igual a uma vaga que não existe.
 rotas.get("/:id", async (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
+  // Number e não parseInt: "3 OR 1=1" não pode virar a vaga 3.
+  const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(404).json(erro("Vaga não encontrada."));
   }
