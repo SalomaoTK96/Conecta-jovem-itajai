@@ -5,6 +5,7 @@ const { exigirLogin, exigirPerfil } = require("../seguranca/porta");
 const { situacaoDoPerfil } = require("../jovens/perfil");
 const { conferirCandidatura, mensagemDeConfirmacao } = require("../candidaturas/regras");
 const { criarNotificacao } = require("../notificacoes/criar");
+const { candidaturaParaJovem, linhaDoTempo } = require("../candidaturas/acompanhar");
 
 const rotas = express.Router();
 
@@ -63,6 +64,56 @@ rotas.get("/vaga/:vagaId", async (req, res) => {
   } catch (falha) {
     console.error("Falha ao consultar a candidatura:", falha);
     return res.status(500).json(erro("Não foi possível consultar a candidatura."));
+  }
+});
+
+const DADOS_DA_VAGA = {
+  vaga: { select: { id: true, titulo: true, cidade: true, empresa: { select: { razaoSocial: true } } } },
+};
+
+// GET /candidaturas -> as candidaturas do jovem logado, a atualização mais
+// recente primeiro (US12). Só as dele: o jovem sai do token.
+rotas.get("/", async (req, res) => {
+  try {
+    const jovem = await banco.jovem.findUnique({ where: { usuarioId: req.usuario.id } });
+    if (!jovem) return res.status(401).json(erro("Sessão inválida."));
+
+    const candidaturas = await banco.candidatura.findMany({
+      where: { jovemId: jovem.id },
+      orderBy: [{ atualizadaEm: "desc" }, { id: "desc" }],
+      include: DADOS_DA_VAGA,
+    });
+
+    return res.json({ candidaturas: candidaturas.map(candidaturaParaJovem) });
+  } catch (falha) {
+    console.error("Falha ao listar as candidaturas do jovem:", falha);
+    return res.status(500).json(erro("Não foi possível carregar suas candidaturas."));
+  }
+});
+
+// GET /candidaturas/:id -> uma candidatura do jovem com o histórico (RN08).
+// Candidatura de outro jovem responde 404, igual a uma que não existe.
+rotas.get("/:id", async (req, res) => {
+  const id = lerId(req.params.id);
+  if (!id) return res.status(404).json(erro("Candidatura não encontrada."));
+
+  try {
+    const jovem = await banco.jovem.findUnique({ where: { usuarioId: req.usuario.id } });
+    if (!jovem) return res.status(401).json(erro("Sessão inválida."));
+
+    const candidatura = await banco.candidatura.findFirst({
+      where: { id, jovemId: jovem.id },
+      include: { ...DADOS_DA_VAGA, historico: true },
+    });
+    if (!candidatura) return res.status(404).json(erro("Candidatura não encontrada."));
+
+    return res.json({
+      ...candidaturaParaJovem(candidatura),
+      historico: linhaDoTempo(candidatura.historico),
+    });
+  } catch (falha) {
+    console.error("Falha ao abrir a candidatura do jovem:", falha);
+    return res.status(500).json(erro("Não foi possível abrir a candidatura."));
   }
 });
 
