@@ -40,6 +40,7 @@ app.use("/sessao", require("./rotas/sessao"));
 app.use("/perfil", require("./rotas/perfil"));
 app.use("/curriculo", require("./rotas/curriculo"));
 app.use("/admin/validacoes", require("./rotas/admin-validacoes"));
+app.use("/vagas", require("./rotas/mural"));
 
 // O mesmo servidor entrega as telas. Em desenvolvimento isso evita precisar de
 // dois programas no ar, e a tela passa a falar com a API no mesmo endereço.
