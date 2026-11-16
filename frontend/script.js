@@ -114,13 +114,27 @@ function montarCadastroDeJovem(formulario) {
     };
 }
 
+// Monta o aviso com textContent, nunca innerHTML. O título e os itens podem
+// trazer texto digitado por um usuario (o título de uma vaga, por exemplo), e
+// com innerHTML um título como <img src=x onerror=...> virava código rodando
+// na página e conseguia ler o token da sessão (defeito DEF-01 da M3).
 function mostrarAviso(elemento, tipo, titulo, itens = []) {
-    const lista = itens.length
-        ? `<ul>${itens.map((i) => `<li>${i}</li>`).join("")}</ul>`
-        : "";
+    const forte = document.createElement("strong");
+    forte.textContent = titulo;
 
     elemento.className = `aviso aviso--${tipo}`;
-    elemento.innerHTML = `<strong>${titulo}</strong>${lista}`;
+    elemento.replaceChildren(forte);
+
+    if (itens.length) {
+        const lista = document.createElement("ul");
+        lista.append(...itens.map((texto) => {
+            const item = document.createElement("li");
+            item.textContent = texto;
+            return item;
+        }));
+        elemento.append(lista);
+    }
+
     elemento.hidden = false;
     elemento.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
