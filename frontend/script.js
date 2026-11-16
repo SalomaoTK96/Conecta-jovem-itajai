@@ -288,7 +288,11 @@ async function mostrarQuemEstaLogado() {
         meuCurriculo.href = "curriculo.html";
         meuCurriculo.className = "login-button";
         meuCurriculo.textContent = "Meu currículo";
-        acoes.append(saudacao, meuPerfil, meuCurriculo, sair);
+        const candidaturas = document.createElement("a");
+        candidaturas.href = "minhas-candidaturas.html";
+        candidaturas.className = "login-button";
+        candidaturas.textContent = "Minhas candidaturas";
+        acoes.append(saudacao, meuPerfil, meuCurriculo, candidaturas, sair);
         return;
     }
 
@@ -2043,4 +2047,95 @@ if (painelDeCandidatos) {
 
     filtro.addEventListener("change", carregarCandidatos);
     carregarCandidatos();
+}
+
+// =========================
+// MINHAS CANDIDATURAS (US12)
+// =========================
+
+const painelDeMinhasCandidaturas = document.querySelector(".painel-minhas-candidaturas");
+
+if (painelDeMinhasCandidaturas) {
+    const aviso = painelDeMinhasCandidaturas.querySelector("#aviso");
+    const lista = painelDeMinhasCandidaturas.querySelector("#lista-minhas-candidaturas");
+    const semCandidaturas = painelDeMinhasCandidaturas.querySelector("#sem-candidaturas");
+
+    if (!pegarToken()) {
+        window.location.href = "login.html?voltar=minhas-candidaturas.html";
+    }
+
+    // Linha do tempo do histórico (RN08), carregada só quando o jovem abre.
+    async function mostrarHistorico(c, destino) {
+        if (destino.dataset.carregado) return;
+        destino.replaceChildren(elemento("p", "Carregando...", "dica"));
+
+        const resposta = await chamarComToken(`/candidaturas/${c.id}`).catch(() => null);
+        if (!resposta || !resposta.ok) {
+            destino.replaceChildren(elemento("p", "Não foi possível carregar o histórico."));
+            return;
+        }
+
+        const dados = await resposta.json();
+        const linha = elemento("ol", null, "linha-do-tempo");
+        dados.historico.forEach((passo) => {
+            const texto = passo.de ? `${passo.de} → ${passo.para}` : `Candidatura enviada: ${passo.para}`;
+            const item = elemento("li");
+            item.append(elemento("strong", texto), elemento("span", ` · ${formatarDataEHora(passo.em)}`, "dica"));
+            linha.append(item);
+        });
+        destino.replaceChildren(linha);
+        destino.dataset.carregado = "sim";
+    }
+
+    function cartaoDaCandidatura(c) {
+        const item = elemento("li", null, "cartao-vaga cartao-candidato");
+
+        const titulo = elemento("h2");
+        const link = elemento("a", c.vaga.titulo);
+        link.href = `vaga.html?id=${c.vaga.id}`;
+        titulo.append(link);
+
+        const selo = elemento("span", c.nomeDoStatus, `selo-status selo-status--${c.status.toLowerCase()}`);
+        const empresa = elemento("p", `${c.vaga.empresa} · ${c.vaga.cidade}`, "empresa-vaga");
+        const atualizada = elemento("p", `Última atualização: ${formatarDataEHora(c.atualizadaEm)}`, "dica");
+
+        const detalhes = document.createElement("details");
+        detalhes.className = "curriculo-candidato";
+        detalhes.append(elemento("summary", "Ver histórico"));
+        const historico = elemento("div");
+        detalhes.append(historico);
+        detalhes.addEventListener("toggle", () => {
+            if (detalhes.open) mostrarHistorico(c, historico);
+        });
+
+        item.append(titulo, selo, empresa, atualizada, detalhes);
+        return item;
+    }
+
+    async function carregarMinhasCandidaturas() {
+        try {
+            const resposta = await chamarComToken("/candidaturas");
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.status === 401) {
+                esquecerToken();
+                window.location.href = "login.html?voltar=minhas-candidaturas.html";
+                return;
+            }
+            if (!resposta.ok) {
+                const mensagem = resposta.status === 403
+                    ? "Esta tela é só para contas de jovem."
+                    : corpo.erros?.[0]?.mensagem || "Não foi possível carregar suas candidaturas.";
+                mostrarAviso(aviso, "erro", mensagem);
+                return;
+            }
+
+            lista.replaceChildren(...corpo.candidaturas.map(cartaoDaCandidatura));
+            semCandidaturas.hidden = corpo.candidaturas.length > 0;
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    carregarMinhasCandidaturas();
 }
