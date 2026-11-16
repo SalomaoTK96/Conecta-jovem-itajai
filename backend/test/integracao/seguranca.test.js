@@ -118,6 +118,11 @@ describe("SEC05: cabeçalhos de segurança (A05)", () => {
     assert.equal(resposta.headers["referrer-policy"], "no-referrer");
     assert.match(resposta.headers["content-security-policy"] || "", /default-src 'self'/);
   });
+
+  test("CORS: outro site não recebe permissão para ler a API (DEF-08)", async () => {
+    const resposta = await api().get("/vagas").set("Origin", "https://site-malicioso.com").expect(200);
+    assert.equal(resposta.headers["access-control-allow-origin"], undefined);
+  });
 });
 
 describe("SEC06: força bruta no login (A07)", () => {
