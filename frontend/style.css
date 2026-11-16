@@ -2414,3 +2414,80 @@ select:focus-visible {
   border-radius: 50%;
   background: var(--primary);
 }
+
+/* =========================
+   NOTIFICAÇÕES (US13)
+   ========================= */
+
+.sino {
+  position: relative;
+}
+
+.contador-notificacoes {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  min-width: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #b42318;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.contador-notificacoes[hidden] {
+  display: none;
+}
+
+.auth-form.painel-notificacoes {
+  max-width: 760px;
+  gap: 0.75rem;
+}
+
+.painel-notificacoes p {
+  text-align: left;
+}
+
+.notificacao {
+  padding: 0;
+}
+
+.notificacao--nova {
+  border-left: 4px solid var(--primary);
+}
+
+.painel-notificacoes .abrir-notificacao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  width: 100%;
+  margin: 0;
+  padding: 1rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.painel-notificacoes .abrir-notificacao:hover .texto-notificacao {
+  color: var(--primary);
+}
+
+.notificacao--nova .texto-notificacao {
+  font-weight: 700;
+}
+
+.selo-nova {
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
