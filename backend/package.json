@@ -10,7 +10,8 @@
     "criar-admin": "node src/scripts/criar-admin.js",
     "massa:vagas": "node src/scripts/massa-de-vagas.js",
     "test": "node --test \"test/unit/**/*.test.js\"",
-    "test:cobertura": "node --test --experimental-test-coverage --test-coverage-include=\"src/**\" --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info \"test/unit/**/*.test.js\""
+    "test:cobertura": "node --test --experimental-test-coverage --test-coverage-include=\"src/**\" --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info \"test/unit/**/*.test.js\"",
+    "test:integracao": "node --test --test-concurrency=1 \"test/integracao/**/*.test.js\""
   },
   "keywords": [],
   "author": "",
@@ -27,5 +28,9 @@
     "multer": "^2.5.0",
     "pg": "^8.23.1",
     "prisma": "7.10.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "supertest": "^7.3.2"
   }
 }
