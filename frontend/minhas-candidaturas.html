@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas candidaturas | Conecta Jovem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-container">
+
+            <a href="index.html" class="logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <nav class="nav" aria-label="Navegação principal">
+                <a href="index.html#inicio" class="nav-link">Início</a>
+                <a href="vagas.html" class="nav-link">Vagas</a>
+                <a href="index.html#sobre" class="nav-link">Sobre</a>
+            </nav>
+
+            <div class="header-actions">
+
+                <button
+                    class="theme-button"
+                    type="button"
+                    aria-label="Alternar tema"
+                    title="Alternar tema">
+                    🌓
+                </button>
+
+                <a href="login.html" class="login-button">Entrar</a>
+                <a href="cadastro.html" class="register-button">Criar conta</a>
+
+            </div>
+        </div>
+    </header>
+
+        <main class="auth-section">
+        <section class="auth-form painel-minhas-candidaturas" aria-labelledby="minhas-candidaturas-titulo">
+            <h1 id="minhas-candidaturas-titulo">Minhas candidaturas</h1>
+            <p class="dica">Abra uma candidatura para ver todas as mudanças de status.</p>
+
+            <ul id="lista-minhas-candidaturas" class="lista-vagas" aria-labelledby="minhas-candidaturas-titulo"></ul>
+
+            <!-- Sem candidaturas: atalho para o mural (critério da US12). -->
+            <div id="sem-candidaturas" class="sem-resultado" hidden>
+                <p><strong>Você ainda não se candidatou a nenhuma vaga.</strong></p>
+                <a href="vagas.html" class="register-button">Ver vagas abertas</a>
+            </div>
+
+            <p id="aviso" class="aviso" role="alert" hidden></p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+
+            <a href="index.html" class="logo footer-logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <p>Conectando jovens a oportunidades de estágio e aprendizagem.</p>
+
+            <span class="footer-copy">© 2026 Conecta Jovem</span>
+
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
