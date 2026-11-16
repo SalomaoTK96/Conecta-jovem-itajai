@@ -299,6 +299,15 @@ mostrarQuemEstaLogado();
 
 // --- tela de login ---
 
+// Depois do login, volta para a tela de onde o usuario veio (?voltar=vaga.html?id=3).
+// Só aceita uma tela deste site, como "vaga.html?id=3". Endereço de fora, como
+// "https://site-falso.com" ou "//site-falso.com", é ignorado e vai para o início:
+// assim ninguém usa o link de login para mandar o usuario para outro site.
+function destinoDepoisDoLogin() {
+    const voltar = new URLSearchParams(window.location.search).get("voltar") || "";
+    return /^[a-z-]+\.html(\?[\w=&%-]*)?$/.test(voltar) ? voltar : "index.html";
+}
+
 const formularioDeLogin = document.querySelector("#form-login");
 
 if (formularioDeLogin) {
@@ -328,7 +337,7 @@ if (formularioDeLogin) {
             if (resposta.ok && corpo.token) {
                 guardarToken(corpo.token);
                 mostrarAviso(aviso, "sucesso", "Tudo certo. Entrando...");
-                setTimeout(() => { window.location.href = "index.html"; }, 1200);
+                setTimeout(() => { window.location.href = destinoDepoisDoLogin(); }, 1200);
                 return;
             }
 
@@ -1751,10 +1760,106 @@ if (painelDaVaga) {
             }
 
             artigo.hidden = false;
+            prepararCandidatura(corpo);
         } catch (erro) {
             mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
         }
     }
+
+    // --- candidatura (US10) ---
+
+    const botao = painelDaVaga.querySelector("#candidatar");
+    const entrar = painelDaVaga.querySelector("#entrar-para-candidatar");
+    const situacao = painelDaVaga.querySelector("#situacao-candidatura");
+
+    // Escreve a situação com textContent: o texto vem da API e nunca vira HTML.
+    function mostrarSituacao(texto, link = null) {
+        situacao.replaceChildren(texto);
+        if (link) {
+            const a = document.createElement("a");
+            a.href = link.href;
+            a.textContent = link.texto;
+            situacao.append(" ", a);
+        }
+        situacao.hidden = false;
+    }
+
+    const LINK_DO_PERFIL = { href: "perfil.html", texto: "Completar meu perfil" };
+    const LINK_DAS_CANDIDATURAS = { href: "minhas-candidaturas.html", texto: "Ver minhas candidaturas" };
+
+    async function prepararCandidatura(vaga) {
+        // Visitante: leva ao login e volta para esta mesma vaga depois.
+        if (!pegarToken()) {
+            entrar.href = `login.html?voltar=${encodeURIComponent(`vaga.html?id=${vaga.id}`)}`;
+            entrar.hidden = false;
+            return;
+        }
+
+        const sessao = await chamarComToken("/sessao/eu").catch(() => null);
+        if (!sessao || !sessao.ok) {
+            esquecerToken();
+            entrar.hidden = false;
+            return;
+        }
+
+        const usuario = await sessao.json();
+        if (usuario.perfil !== "JOVEM") {
+            mostrarSituacao("Só contas de jovem podem se candidatar às vagas.");
+            return;
+        }
+
+        const resposta = await chamarComToken(`/candidaturas/vaga/${vaga.id}`).catch(() => null);
+        const dados = resposta && resposta.ok ? await resposta.json() : null;
+
+        if (dados?.jaCandidatou) {
+            mostrarSituacao("Você já se candidatou a esta vaga.", LINK_DAS_CANDIDATURAS);
+            return;
+        }
+
+        // RN02: avisa antes do clique o que falta no perfil.
+        if (dados && !dados.perfilCompleto) {
+            mostrarSituacao(`Para se candidatar, complete seu perfil. Falta: ${dados.faltando.join(", ")}.`, LINK_DO_PERFIL);
+        }
+
+        botao.hidden = false;
+    }
+
+    botao.addEventListener("click", async () => {
+        botao.disabled = true;
+        botao.textContent = "Enviando...";
+
+        try {
+            const resposta = await chamarComToken("/candidaturas", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ vagaId: Number(id) }),
+            });
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (resposta.ok) {
+                botao.hidden = true;
+                mostrarSituacao("Candidatura enviada! Status: Em análise.", LINK_DAS_CANDIDATURAS);
+                return;
+            }
+
+            if (resposta.status === 401) {
+                esquecerToken();
+                window.location.href = `login.html?voltar=${encodeURIComponent(`vaga.html?id=${id}`)}`;
+                return;
+            }
+
+            const mensagem = corpo.erros?.[0]?.mensagem || "Não foi possível enviar a candidatura.";
+            mostrarSituacao(mensagem, corpo.irPara === "perfil.html" ? LINK_DO_PERFIL : null);
+
+            // Vaga encerrada ou candidatura repetida: o botão não serve mais.
+            if (resposta.status === 409 || resposta.status === 404) botao.hidden = true;
+        } catch (erro) {
+            mostrarSituacao("Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        } finally {
+            botao.disabled = false;
+            botao.textContent = "Candidatar-se";
+        }
+    });
 
     carregarVaga();
 }
