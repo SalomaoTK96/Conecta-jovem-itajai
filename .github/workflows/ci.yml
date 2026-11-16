@@ -43,6 +43,12 @@ jobs:
         working-directory: backend
         run: npx prisma validate
 
+      # Roda os testes unitários das regras de negócio. Se algum falhar, o
+      # pull request fica reprovado e o merge é bloqueado (teste de regressão).
+      - name: Roda os testes unitários com cobertura
+        working-directory: backend
+        run: npm run test:cobertura
+
       # Garante que nenhum segredo de verdade foi commitado por engano.
       - name: Garante que o .env nao foi versionado
         run: |
