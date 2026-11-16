@@ -61,9 +61,11 @@
                     <p id="vaga-requisitos" class="texto-vaga"></p>
                 </div>
 
-                <!-- A candidatura em si é a US10. -->
+                <!-- US10: o botão só funciona para jovem logado. Visitante é levado ao login. -->
                 <div id="area-candidatura" class="area-candidatura">
-                    <button type="button" id="candidatar" class="register-button">Candidatar-se</button>
+                    <button type="button" id="candidatar" class="register-button" hidden>Candidatar-se</button>
+                    <a href="login.html" id="entrar-para-candidatar" class="register-button" hidden>Entrar para se candidatar</a>
+                    <p id="situacao-candidatura" class="situacao-candidatura" role="status" aria-live="polite" hidden></p>
                 </div>
             </article>
 

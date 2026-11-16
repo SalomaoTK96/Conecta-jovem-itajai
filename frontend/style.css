@@ -2218,3 +2218,33 @@ select:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================
+   CANDIDATURA (US10)
+   ========================= */
+
+.area-candidatura {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.area-candidatura [hidden] {
+  display: none;
+}
+
+.area-candidatura a.register-button:not([hidden]) {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.painel-detalhe-vaga .situacao-candidatura {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--text);
+}
