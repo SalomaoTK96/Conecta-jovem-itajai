@@ -8,7 +8,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "criar-admin": "node src/scripts/criar-admin.js",
-    "test": "echo \"Sem testes automatizados ainda. Os roteiros manuais ficam em docs/testes/.\" && exit 0"
+    "test": "node --test \"test/unit/**/*.test.js\"",
+    "test:cobertura": "node --test --experimental-test-coverage --test-coverage-include=\"src/**\" --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info \"test/unit/**/*.test.js\""
   },
   "keywords": [],
   "author": "",

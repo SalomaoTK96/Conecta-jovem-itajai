@@ -9,3 +9,6 @@ uploads/
 
 # Certificado de desenvolvimento (a chave privada nunca vai para o repositório)
 certificados/
+
+# Relatórios de cobertura gerados pelo npm run test:cobertura
+lcov.info
