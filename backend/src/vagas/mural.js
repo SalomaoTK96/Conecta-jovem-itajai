@@ -14,17 +14,25 @@ function limpar(valor) {
   return typeof valor === "string" ? valor.trim() : "";
 }
 
+// O Prisma monta a busca com LIKE e não escapa os curingas. Sem isto, buscar
+// "%" trazia todas as vagas e "_" casava com qualquer letra (defeito DEF-04).
+// A barra invertida é o caractere de escape padrão do LIKE no PostgreSQL.
+function escaparCuringas(texto) {
+  return texto.replace(/[\\%_]/g, (letra) => `\\${letra}`);
+}
+
 // Lê os filtros do endereço (?area=&cidade=&q=&pagina=). O que vier fora do
 // padrão é ignorado em vez de dar erro: o mural é público e não pode quebrar
 // por causa de um link digitado errado.
 function lerFiltros(consulta = {}) {
   const area = limpar(consulta.area);
-  const pagina = Number.parseInt(consulta.pagina, 10);
+  const pagina = Number(consulta.pagina);
 
   return {
     area: AREAS.includes(area) ? area : null,
-    cidade: limpar(consulta.cidade).slice(0, 60) || null,
-    palavra: limpar(consulta.q).slice(0, TAMANHO_MAXIMO_DA_PALAVRA) || null,
+    // A cidade também: o Prisma compara sem diferenciar maiúsculas usando ILIKE.
+    cidade: escaparCuringas(limpar(consulta.cidade).slice(0, 60)) || null,
+    palavra: escaparCuringas(limpar(consulta.q).slice(0, TAMANHO_MAXIMO_DA_PALAVRA)) || null,
     pagina: Number.isInteger(pagina) && pagina > 0 ? pagina : 1,
   };
 }
@@ -98,6 +106,7 @@ function vagaParaDetalhes(vaga) {
 
 module.exports = {
   VAGAS_POR_PAGINA,
+  escaparCuringas,
   lerFiltros,
   filtroDoMural,
   paginacao,
