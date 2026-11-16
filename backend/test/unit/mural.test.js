@@ -5,6 +5,7 @@ const assert = require("node:assert/strict");
 
 const {
   VAGAS_POR_PAGINA,
+  escaparCuringas,
   lerFiltros,
   filtroDoMural,
   paginacao,
@@ -33,6 +34,21 @@ describe("lerFiltros", () => {
 
   test("palavra-chave longa é cortada em 100 caracteres", () => {
     assert.equal(lerFiltros({ q: "a".repeat(300) }).palavra.length, 100);
+  });
+});
+
+describe("DEF-04: curingas do LIKE", () => {
+  test("% e _ viram texto comum, e a barra também é escapada", () => {
+    assert.equal(escaparCuringas("50%"), "50\\%");
+    assert.equal(escaparCuringas("a_b"), "a\\_b");
+    assert.equal(escaparCuringas("c:\\x"), "c:\\\\x");
+    assert.equal(escaparCuringas("Itajaí"), "Itajaí");
+  });
+
+  test("palavra-chave e cidade chegam escapadas no filtro", () => {
+    const filtros = lerFiltros({ q: "%", cidade: "_" });
+    assert.equal(filtros.palavra, "\\%");
+    assert.equal(filtros.cidade, "\\_");
   });
 });
 
