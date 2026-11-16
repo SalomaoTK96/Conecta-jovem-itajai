@@ -12,6 +12,7 @@ const {
   podeDecidir,
   mensagemParaEmpresa,
 } = require("../empresas/decisao");
+const { criarNotificacao } = require("../notificacoes/criar");
 
 const rotas = express.Router();
 
@@ -192,11 +193,9 @@ rotas.post("/:id/decisao", async (req, res) => {
         data: { status: efeito.statusEmpresa },
       });
 
-      await tx.notificacao.create({
-        data: {
-          destinatarioId: solicitacao.empresa.usuarioId,
-          mensagem: mensagemParaEmpresa(decisao, motivo),
-        },
+      await criarNotificacao(tx, {
+        destinatarioId: solicitacao.empresa.usuarioId,
+        mensagem: mensagemParaEmpresa(decisao, motivo),
       });
 
       return true;
