@@ -20,8 +20,10 @@ function erro(mensagem) {
   return { erros: [{ campo: null, mensagem }] };
 }
 
+// Number e não parseInt: parseInt("3 OR 1=1") vira 3, Number vira NaN.
+// Igual ao lerId das rotas da US07 e da US08.
 function lerId(valor) {
-  const id = Number.parseInt(valor, 10);
+  const id = Number(valor);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 

@@ -39,7 +39,8 @@
     </header>
 
     <main class="auth-section">
-        <form class="auth-form" id="form-cadastro-empresa" aria-labelledby="cadastro-empresa-titulo">
+        <!-- method="post": se o JavaScript não carregar, a senha não vai parar no endereço da página (DEF-09). -->
+        <form class="auth-form" id="form-cadastro-empresa" method="post" aria-labelledby="cadastro-empresa-titulo">
             <h1 id="cadastro-empresa-titulo">Cadastro de Empresa</h1>
 
             <label for="nome-empresa">Nome da empresa</label>

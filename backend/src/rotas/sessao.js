@@ -4,6 +4,7 @@ const banco = require("../banco");
 const { conferirSenha } = require("../seguranca/senha");
 const { gerarToken } = require("../seguranca/token");
 const { exigirLogin } = require("../seguranca/porta");
+const { criarControleDeTentativas, chaveDoLogin } = require("../seguranca/tentativas");
 
 const rotas = express.Router();
 
@@ -14,6 +15,9 @@ const RECUSA = {
   erros: [{ campo: null, mensagem: "E-mail ou senha incorretos." }],
 };
 
+// Uma trava só para o processo inteiro (DEF-03).
+const tentativas = criarControleDeTentativas();
+
 // POST /sessao -> entra no sistema
 rotas.post("/", async (req, res) => {
   const { email, senha } = req.body || {};
@@ -21,6 +25,18 @@ rotas.post("/", async (req, res) => {
   if (typeof email !== "string" || typeof senha !== "string" || !email.trim() || !senha) {
     return res.status(400).json({
       erros: [{ campo: null, mensagem: "Informe e-mail e senha." }],
+    });
+  }
+
+  // Bloqueado depois de 5 erros seguidos: nem confere a senha, para quem tenta
+  // adivinhar não saber se acertou durante o bloqueio.
+  const chave = chaveDoLogin(email, req.ip);
+  const { bloqueado, liberaEmMs } = tentativas.situacao(chave);
+  if (bloqueado) {
+    const minutos = Math.ceil(liberaEmMs / 60000);
+    res.set("Retry-After", String(Math.ceil(liberaEmMs / 1000)));
+    return res.status(429).json({
+      erros: [{ campo: null, mensagem: `Muitas tentativas erradas. Tente de novo em ${minutos} minuto(s).` }],
     });
   }
 
@@ -40,8 +56,11 @@ rotas.post("/", async (req, res) => {
     const senhaConfere = await conferirSenha(senha, hashParaConferir);
 
     if (!usuario || !senhaConfere) {
+      tentativas.registrarErro(chave);
       return res.status(401).json(RECUSA);
     }
+
+    tentativas.limpar(chave);
 
     return res.json({
       token: gerarToken(usuario),

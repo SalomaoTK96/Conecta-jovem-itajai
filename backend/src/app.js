@@ -3,6 +3,7 @@ const path = require("node:path");
 const express = require("express");
 const cors = require("cors");
 const forcarHttps = require("./https");
+const { cabecalhosDeSeguranca } = require("./seguranca/cabecalhos");
 
 const app = express();
 
@@ -10,13 +11,23 @@ const app = express();
 // em HTTP. Sem isso, req.secure fica sempre falso e o redirecionamento entra em loop.
 app.set("trust proxy", 1);
 
+// Não anuncia que o servidor é Express: quem procura falha conhecida de uma
+// versão não ganha a dica de graça (defeito DEF-02).
+app.disable("x-powered-by");
+
 // Vem antes de tudo: nenhuma rota pode responder por HTTP quando o HTTPS é obrigatório.
 app.use(forcarHttps);
+app.use(cabecalhosDeSeguranca);
 
-// Em desenvolvimento a tela sai deste mesmo servidor, então nem precisaria.
-// Fica ligado porque quando o front for publicado em outro endereço, o
-// navegador bloquearia a chamada sem isto.
-app.use(cors());
+// CORS: por padrão nenhum outro site pode chamar a API pelo navegador, porque
+// a tela sai deste mesmo servidor. O OWASP ZAP apontou o "*" que estava aqui
+// (defeito DEF-08). Se a tela for publicada em outro endereço, ponha esse
+// endereço em CORS_ORIGENS no .env (vários separados por vírgula).
+const origensPermitidas = (process.env.CORS_ORIGENS || "")
+  .split(",")
+  .map((origem) => origem.trim())
+  .filter(Boolean);
+app.use(cors({ origin: origensPermitidas.length ? origensPermitidas : false }));
 
 // Sem esta linha, req.body chega vazio quando a tela manda JSON.
 app.use(express.json());
