@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidatos | Conecta Jovem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-container">
+
+            <a href="index.html" class="logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <nav class="nav" aria-label="Navegação principal">
+                <a href="index.html#inicio" class="nav-link">Início</a>
+                <a href="vagas.html" class="nav-link">Vagas</a>
+                <a href="index.html#sobre" class="nav-link">Sobre</a>
+            </nav>
+
+            <div class="header-actions">
+
+                <button
+                    class="theme-button"
+                    type="button"
+                    aria-label="Alternar tema"
+                    title="Alternar tema">
+                    🌓
+                </button>
+
+                <a href="login.html" class="login-button">Entrar</a>
+                <a href="cadastro.html" class="register-button">Criar conta</a>
+
+            </div>
+        </div>
+    </header>
+
+        <main class="auth-section">
+        <section class="auth-form painel-candidatos" aria-labelledby="candidatos-titulo">
+            <p><a href="minhas-vagas.html">← Voltar para minhas vagas</a></p>
+            <h1 id="candidatos-titulo">Candidatos</h1>
+            <p id="vaga-dos-candidatos" class="empresa-vaga"></p>
+
+            <!-- Filtro por status (critério da US11). -->
+            <div class="filtro-status">
+                <label for="filtro-status">Mostrar</label>
+                <select id="filtro-status">
+                    <option value="">Todos os status</option>
+                </select>
+            </div>
+
+            <p id="resumo-candidatos" class="dica" role="status" aria-live="polite"></p>
+            <ul id="lista-candidatos" class="lista-vagas" aria-labelledby="candidatos-titulo"></ul>
+
+            <p id="aviso" class="aviso" role="alert" hidden></p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+
+            <a href="index.html" class="logo footer-logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <p>Conectando jovens a oportunidades de estágio e aprendizagem.</p>
+
+            <span class="footer-copy">© 2026 Conecta Jovem</span>
+
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
