@@ -39,7 +39,8 @@
     </header>
 
     <main class="auth-section">
-        <form class="auth-form" id="form-cadastro-jovem" aria-labelledby="cadastro-jovem-titulo">
+        <!-- method="post": se o JavaScript não carregar, a senha não vai parar no endereço da página (DEF-09). -->
+        <form class="auth-form" id="form-cadastro-jovem" method="post" aria-labelledby="cadastro-jovem-titulo">
             <h1 id="cadastro-jovem-titulo">Cadastro de Jovem</h1>
 
             <label for="nome">Nome completo</label>
