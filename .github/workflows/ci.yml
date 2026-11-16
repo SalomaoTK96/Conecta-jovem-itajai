@@ -57,3 +57,58 @@ jobs:
             exit 1
           fi
           echo "Nenhum .env versionado."
+
+  # Testes de integração: sobem um PostgreSQL de verdade só para o teste,
+  # aplicam as migrações e chamam a API com o Supertest.
+  integracao:
+    name: Integracao (API e banco)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: conecta_jovem_teste
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/conecta_jovem_teste?schema=public
+      DATABASE_URL_TESTE: postgresql://ci:ci@localhost:5432/conecta_jovem_teste?schema=public
+      JWT_SECRET: segredo-so-para-o-ci-com-mais-de-32-caracteres
+
+    steps:
+      - name: Baixa o codigo
+        uses: actions/checkout@v4
+
+      - name: Prepara o Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instala as dependencias
+        working-directory: backend
+        run: npm ci
+
+      # Aplica as migrações na ordem, com o psql que já vem na máquina do GitHub.
+      - name: Cria as tabelas no banco de teste
+        working-directory: backend
+        env:
+          PGPASSWORD: ci
+        run: |
+          for arquivo in prisma/migrations/*/migration.sql; do
+            psql -v ON_ERROR_STOP=1 -h localhost -U ci -d conecta_jovem_teste -f "$arquivo"
+          done
+
+      - name: Roda os testes de integracao
+        working-directory: backend
+        run: npm run test:integracao
