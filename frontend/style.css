@@ -2354,3 +2354,63 @@ select:focus-visible {
   margin-top: 0;
   padding: 0.5rem 1rem;
 }
+
+/* =========================
+   MINHAS CANDIDATURAS (US12)
+   ========================= */
+
+.auth-form.painel-minhas-candidaturas {
+  max-width: 820px;
+  gap: 0.75rem;
+}
+
+.painel-minhas-candidaturas p {
+  margin: 0.2rem 0;
+  text-align: left;
+}
+
+.painel-minhas-candidaturas .cartao-candidato h2 a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.painel-minhas-candidaturas .cartao-candidato h2 a:hover,
+.painel-minhas-candidaturas .cartao-candidato h2 a:focus-visible {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.painel-minhas-candidaturas .sem-resultado p {
+  text-align: center;
+}
+
+.painel-minhas-candidaturas .sem-resultado a {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  text-decoration: none;
+}
+
+.linha-do-tempo {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  border-left: 2px solid var(--border);
+  list-style: none;
+}
+
+.linha-do-tempo li {
+  position: relative;
+  padding: 0.3rem 0;
+}
+
+/* Bolinha de cada passo na linha. */
+.linha-do-tempo li::before {
+  content: "";
+  position: absolute;
+  left: -1.6rem;
+  top: 0.7rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--primary);
+}
