@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "criar-admin": "node src/scripts/criar-admin.js",
+    "massa:vagas": "node src/scripts/massa-de-vagas.js",
     "test": "node --test \"test/unit/**/*.test.js\"",
     "test:cobertura": "node --test --experimental-test-coverage --test-coverage-include=\"src/**\" --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info \"test/unit/**/*.test.js\""
   },
