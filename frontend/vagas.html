@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vagas | Conecta Jovem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-container">
+
+            <a href="index.html" class="logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <nav class="nav" aria-label="Navegação principal">
+                <a href="index.html#inicio" class="nav-link">Início</a>
+                <a href="vagas.html" class="nav-link">Vagas</a>
+                <a href="index.html#sobre" class="nav-link">Sobre</a>
+            </nav>
+
+            <div class="header-actions">
+
+                <button
+                    class="theme-button"
+                    type="button"
+                    aria-label="Alternar tema"
+                    title="Alternar tema">
+                    🌓
+                </button>
+
+                <a href="login.html" class="login-button">Entrar</a>
+                <a href="cadastro.html" class="register-button">Criar conta</a>
+
+            </div>
+        </div>
+    </header>
+
+        <main class="auth-section">
+        <section class="auth-form painel-mural" aria-labelledby="mural-titulo">
+            <h1 id="mural-titulo">Vagas abertas</h1>
+            <p class="dica">Estágio e aprendizagem de empresas validadas pelo Conecta Jovem.</p>
+
+            <!-- RF06: os filtros podem ser combinados. Ficam no endereço, então dá para compartilhar a busca. -->
+            <form id="form-filtros" class="filtros-mural" role="search" aria-label="Filtrar vagas">
+                <div class="campo">
+                    <label for="filtro-q">Palavra-chave</label>
+                    <input type="text" id="filtro-q" name="q" maxlength="100" placeholder="Ex.: Excel, atendimento">
+                </div>
+                <div class="campo">
+                    <label for="filtro-area">Área</label>
+                    <select id="filtro-area" name="area">
+                        <option value="">Todas as áreas</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="filtro-cidade">Cidade</label>
+                    <input type="text" id="filtro-cidade" name="cidade" maxlength="60" placeholder="Ex.: Itajaí">
+                </div>
+                <div class="botoes-filtro">
+                    <button type="submit" class="register-button">Buscar</button>
+                    <button type="button" id="limpar-filtros" class="secondary-button">Limpar filtros</button>
+                </div>
+            </form>
+
+            <p id="resumo-mural" class="dica" role="status" aria-live="polite"></p>
+
+            <ul id="lista-mural" class="lista-vagas" aria-labelledby="mural-titulo"></ul>
+
+            <!-- Sem resultado: mensagem clara e a opção de limpar os filtros (critério da US09). -->
+            <div id="sem-resultado" class="sem-resultado" hidden>
+                <p><strong>Nenhuma vaga encontrada com esses filtros.</strong></p>
+                <p>Tente outra palavra-chave ou veja todas as vagas abertas.</p>
+                <button type="button" id="limpar-sem-resultado" class="secondary-button">Limpar filtros</button>
+            </div>
+
+            <nav id="paginacao" class="paginacao" aria-label="Páginas do mural" hidden>
+                <button type="button" id="pagina-anterior" class="secondary-button">← Anterior</button>
+                <span id="pagina-atual"></span>
+                <button type="button" id="pagina-seguinte" class="secondary-button">Próxima →</button>
+            </nav>
+
+            <p id="aviso" class="aviso" role="alert" hidden></p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+
+            <a href="index.html" class="logo footer-logo">
+                <span class="logo-mark" aria-hidden="true">CJ</span>
+                <span>Conecta <strong>Jovem</strong></span>
+            </a>
+
+            <p>Conectando jovens a oportunidades de estágio e aprendizagem.</p>
+
+            <span class="footer-copy">© 2026 Conecta Jovem</span>
+
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
