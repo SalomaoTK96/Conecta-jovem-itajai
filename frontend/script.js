@@ -1580,3 +1580,181 @@ if (painelDoCurriculo) {
 
     carregar();
 }
+
+// =========================
+// MURAL DE VAGAS (US09)
+// =========================
+
+// Prazo em texto curto, no horário de Itajaí: "15/12/2026".
+function prazoParaLer(texto) {
+    return new Date(texto).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+}
+
+const painelDoMural = document.querySelector(".painel-mural");
+
+if (painelDoMural) {
+    const aviso = painelDoMural.querySelector("#aviso");
+    const filtros = painelDoMural.querySelector("#form-filtros");
+    const campoArea = filtros.querySelector("#filtro-area");
+    const lista = painelDoMural.querySelector("#lista-mural");
+    const resumo = painelDoMural.querySelector("#resumo-mural");
+    const semResultado = painelDoMural.querySelector("#sem-resultado");
+    const paginacao = painelDoMural.querySelector("#paginacao");
+    const anterior = paginacao.querySelector("#pagina-anterior");
+    const seguinte = paginacao.querySelector("#pagina-seguinte");
+    const paginaAtual = paginacao.querySelector("#pagina-atual");
+
+    // Os filtros moram no endereço (?area=&cidade=&q=&pagina=). Assim o botão
+    // voltar do navegador funciona e a busca pode ser compartilhada.
+    function filtrosDoEndereco() {
+        return new URLSearchParams(window.location.search);
+    }
+
+    function irPara(parametros) {
+        const limpos = new URLSearchParams();
+        parametros.forEach((valor, chave) => {
+            if (valor.trim()) limpos.set(chave, valor.trim());
+        });
+        const busca = limpos.toString();
+        history.pushState(null, "", busca ? `?${busca}` : "vagas.html");
+        carregarMural();
+    }
+
+    function preencherAreas(areas) {
+        if (campoArea.options.length > 1) return;
+        campoArea.append(...areas.map((area) => new Option(area, area)));
+    }
+
+    function cartaoDoMural(vaga) {
+        const item = document.createElement("li");
+        item.className = "cartao-vaga cartao-mural";
+
+        const titulo = document.createElement("h2");
+        const link = document.createElement("a");
+        link.href = `vaga.html?id=${vaga.id}`;
+        link.textContent = vaga.titulo;
+        titulo.append(link);
+
+        const empresa = document.createElement("p");
+        empresa.className = "empresa-vaga";
+        empresa.textContent = vaga.empresa;
+
+        const dados = document.createElement("p");
+        dados.textContent = `${NOMES_DOS_TIPOS[vaga.tipo] || vaga.tipo} · ${vaga.area} · ${vaga.cidade}`;
+
+        const prazo = document.createElement("p");
+        prazo.className = "dica";
+        prazo.textContent = `Candidaturas até ${prazoParaLer(vaga.expiraEm)}`;
+
+        item.append(titulo, empresa, dados, prazo);
+        return item;
+    }
+
+    function mostrarPaginacao(dados) {
+        paginacao.hidden = dados.totalDePaginas <= 1;
+        paginaAtual.textContent = `Página ${dados.pagina} de ${dados.totalDePaginas}`;
+        anterior.disabled = dados.pagina <= 1;
+        seguinte.disabled = dados.pagina >= dados.totalDePaginas;
+        anterior.dataset.pagina = dados.pagina - 1;
+        seguinte.dataset.pagina = dados.pagina + 1;
+    }
+
+    async function carregarMural() {
+        const parametros = filtrosDoEndereco();
+        aviso.hidden = true;
+
+        filtros.querySelector("#filtro-q").value = parametros.get("q") || "";
+        filtros.querySelector("#filtro-cidade").value = parametros.get("cidade") || "";
+
+        try {
+            const resposta = await fetch(`${ENDERECO_DA_API}/vagas?${parametros}`);
+            const dados = await resposta.json();
+            if (!resposta.ok) {
+                mostrarAviso(aviso, "erro", "Não foi possível carregar as vagas.");
+                return;
+            }
+
+            preencherAreas(dados.opcoes.areas);
+            campoArea.value = dados.filtros.area || "";
+
+            lista.replaceChildren(...dados.vagas.map(cartaoDoMural));
+            semResultado.hidden = dados.total > 0;
+            resumo.textContent = dados.total === 1 ? "1 vaga encontrada." : `${dados.total} vagas encontradas.`;
+            mostrarPaginacao(dados);
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    filtros.addEventListener("submit", (evento) => {
+        evento.preventDefault();
+        // Busca nova sempre começa da página 1.
+        irPara(new URLSearchParams(new FormData(filtros)));
+    });
+
+    const limpar = () => {
+        filtros.reset();
+        irPara(new URLSearchParams());
+    };
+    painelDoMural.querySelector("#limpar-filtros").addEventListener("click", limpar);
+    painelDoMural.querySelector("#limpar-sem-resultado").addEventListener("click", limpar);
+
+    [anterior, seguinte].forEach((botao) =>
+        botao.addEventListener("click", () => {
+            const parametros = filtrosDoEndereco();
+            parametros.set("pagina", botao.dataset.pagina);
+            irPara(parametros);
+            painelDoMural.scrollIntoView({ behavior: "smooth" });
+        })
+    );
+
+    window.addEventListener("popstate", carregarMural);
+    carregarMural();
+}
+
+// --- detalhes da vaga ---
+
+const painelDaVaga = document.querySelector(".painel-detalhe-vaga");
+
+if (painelDaVaga) {
+    const aviso = painelDaVaga.querySelector("#aviso");
+    const artigo = painelDaVaga.querySelector("#detalhe-vaga");
+    const id = new URLSearchParams(window.location.search).get("id");
+
+    function escrever(seletor, texto) {
+        painelDaVaga.querySelector(seletor).textContent = texto;
+    }
+
+    async function carregarVaga() {
+        try {
+            const resposta = await fetch(`${ENDERECO_DA_API}/vagas/${encodeURIComponent(id || "")}`);
+            const corpo = await resposta.json().catch(() => ({}));
+
+            if (!resposta.ok) {
+                const mensagem = corpo.erros?.[0]?.mensagem || "Vaga não encontrada.";
+                mostrarAviso(aviso, "erro", mensagem);
+                return;
+            }
+
+            document.title = `${corpo.titulo} | Conecta Jovem`;
+            escrever("#vaga-titulo", corpo.titulo);
+            escrever("#vaga-empresa", corpo.empresa);
+            escrever("#vaga-tipo", NOMES_DOS_TIPOS[corpo.tipo] || corpo.tipo);
+            escrever("#vaga-area", corpo.area);
+            escrever("#vaga-cidade", corpo.cidade);
+            escrever("#vaga-prazo", prazoParaLer(corpo.expiraEm));
+            escrever("#vaga-descricao", corpo.descricao);
+
+            if (corpo.requisitos) {
+                escrever("#vaga-requisitos", corpo.requisitos);
+                painelDaVaga.querySelector("#bloco-requisitos").hidden = false;
+            }
+
+            artigo.hidden = false;
+        } catch (erro) {
+            mostrarAviso(aviso, "erro", "Não conseguimos falar com o servidor. Confira a conexão e tente de novo.");
+        }
+    }
+
+    carregarVaga();
+}
