@@ -299,6 +299,15 @@ mostrarQuemEstaLogado();
 
 // --- tela de login ---
 
+// Depois do login, volta para a tela de onde o usuario veio (?voltar=vaga.html?id=3).
+// Só aceita uma tela deste site, como "vaga.html?id=3". Endereço de fora, como
+// "https://site-falso.com" ou "//site-falso.com", é ignorado e vai para o início:
+// assim ninguém usa o link de login para mandar o usuario para outro site.
+function destinoDepoisDoLogin() {
+    const voltar = new URLSearchParams(window.location.search).get("voltar") || "";
+    return /^[a-z-]+\.html(\?[\w=&%-]*)?$/.test(voltar) ? voltar : "index.html";
+}
+
 const formularioDeLogin = document.querySelector("#form-login");
 
 if (formularioDeLogin) {
@@ -328,7 +337,7 @@ if (formularioDeLogin) {
             if (resposta.ok && corpo.token) {
                 guardarToken(corpo.token);
                 mostrarAviso(aviso, "sucesso", "Tudo certo. Entrando...");
-                setTimeout(() => { window.location.href = "index.html"; }, 1200);
+                setTimeout(() => { window.location.href = destinoDepoisDoLogin(); }, 1200);
                 return;
             }
 
