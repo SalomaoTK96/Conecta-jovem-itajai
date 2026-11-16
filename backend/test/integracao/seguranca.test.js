@@ -122,13 +122,16 @@ describe("SEC05: cabeçalhos de segurança (A05)", () => {
 
 describe("SEC06: força bruta no login (A07)", () => {
   test("depois de 5 senhas erradas seguidas, o login fica bloqueado por um tempo", async () => {
-    const tentativa = (senha) => api().post("/sessao").send({ email: "ana@teste.com", senha });
+    // A conta da empresa ainda não teve nenhum erro de senha neste arquivo.
+    const tentativa = (senha) => api().post("/sessao").send({ email: "empresa@teste.com", senha });
 
     for (let i = 0; i < 5; i += 1) await tentativa("errada" + i).expect(401);
+    // Até a senha certa é recusada durante o bloqueio.
     const bloqueada = await tentativa(SENHA).expect(429);
     assert.match(bloqueada.body.erros[0].mensagem, /Muitas tentativas/);
+    assert.ok(Number(bloqueada.headers["retry-after"]) > 0);
 
-    // Outro e-mail não é afetado pelo bloqueio da Ana.
-    await api().post("/sessao").send({ email: "empresa@teste.com", senha: SENHA }).expect(200);
+    // Outro e-mail não é afetado pelo bloqueio da empresa.
+    await api().post("/sessao").send({ email: "ana@teste.com", senha: SENHA }).expect(200);
   });
 });
